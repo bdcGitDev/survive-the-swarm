@@ -2495,13 +2495,29 @@ function updateHUD() {
 // =============================================================
 // LOOP
 // =============================================================
+// FPS counter (visible top-left during play for debugging)
+let fpsFrames = 0, fpsTimer = 0, fpsValue = 0;
 function loop(now) {
   if (state === 'playing') {
-    frameDelta = Math.min(now - lastFrame, 50); // cap delta to avoid spiral
+    frameDelta = Math.min(now - lastFrame, 100); // cap delta to avoid spiral (10fps floor)
     lastFrame = now;
     update(frameDelta);
     render();
     updateHUD();
+    // Track FPS
+    fpsFrames++;
+    fpsTimer += frameDelta;
+    if (fpsTimer >= 500) {
+      fpsValue = Math.round(fpsFrames * 1000 / fpsTimer);
+      fpsFrames = 0;
+      fpsTimer = 0;
+    }
+    // Draw FPS in top-left corner of canvas
+    ctx.save();
+    ctx.font = 'bold 16px monospace';
+    ctx.fillStyle = fpsValue >= 50 ? '#7cffb2' : (fpsValue >= 30 ? '#ffd60a' : '#ff3b3b');
+    ctx.fillText('FPS: ' + fpsValue, 12, 24);
+    ctx.restore();
   } else if (state === 'levelup' || state === 'paused') {
     render();
     updateHUD();
