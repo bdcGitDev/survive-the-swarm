@@ -1691,6 +1691,9 @@ function refreshLegendariesPanel() {
 // UPDATE
 // =============================================================
 function update(dt) {
+  // Frame-rate independence: all per-frame movement multiplies by this so the
+  // game runs the same speed at 30fps as 60fps. 16.667ms = one 60fps frame.
+  const frameScale = dt / 16.667;
   timeMs += dt;
   waveTimer += dt;
   if (waveTimer >= WAVE_DURATION && !bossActive && bossWarning <= 0) {
@@ -1727,8 +1730,8 @@ function update(dt) {
   if (mx || my) {
     const len = Math.hypot(mx, my);
     mx /= len; my /= len;
-    player.x += mx * player.speed;
-    player.y += my * player.speed;
+    player.x += mx * player.speed * frameScale;
+    player.y += my * player.speed * frameScale;
   }
   player.x = Math.max(player.r, Math.min(W - player.r, player.x));
   player.y = Math.max(player.r, Math.min(H - player.r, player.y));
@@ -1748,8 +1751,8 @@ function update(dt) {
   // --- Projectiles ---
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
-    p.x += p.vx;
-    p.y += p.vy;
+    p.x += p.vx * frameScale;
+    p.y += p.vy * frameScale;
     p.life -= dt;
     if (p.life <= 0 || p.x < -50 || p.x > W + 50 || p.y < -50 || p.y > H + 50) {
       projectiles.splice(i, 1);
@@ -1828,17 +1831,17 @@ function update(dt) {
     }
 
     // Apply knockback decay
-    e.x += e.knockbackX;
-    e.y += e.knockbackY;
-    e.knockbackX *= 0.7;
-    e.knockbackY *= 0.7;
+    e.x += e.knockbackX * frameScale;
+    e.y += e.knockbackY * frameScale;
+    e.knockbackX *= Math.pow(0.7, frameScale);
+    e.knockbackY *= Math.pow(0.7, frameScale);
 
     // Move toward player (with slow factor applied)
     const dx = player.x - e.x, dy = player.y - e.y;
     const d = Math.hypot(dx, dy) || 1;
     const effectiveSpeed = e.speed * (e.slowTime > 0 ? e.slowFactor : 1);
-    e.x += (dx / d) * effectiveSpeed;
-    e.y += (dy / d) * effectiveSpeed;
+    e.x += (dx / d) * effectiveSpeed * frameScale;
+    e.y += (dy / d) * effectiveSpeed * frameScale;
 
     // Death
     if (e.hp <= 0) {
@@ -1893,10 +1896,10 @@ function update(dt) {
       const minD = e.r + e2.r;
       if (dd < minD && dd > 0) {
         const push = (minD - dd) / 2;
-        e.x += (ddx / dd) * push * 0.4;
-        e.y += (ddy / dd) * push * 0.4;
-        e2.x -= (ddx / dd) * push * 0.4;
-        e2.y -= (ddy / dd) * push * 0.4;
+        e.x += (ddx / dd) * push * 0.4 * frameScale;
+        e.y += (ddy / dd) * push * 0.4 * frameScale;
+        e2.x -= (ddx / dd) * push * 0.4 * frameScale;
+        e2.y -= (ddy / dd) * push * 0.4 * frameScale;
       }
     }
   }
@@ -1911,10 +1914,10 @@ function update(dt) {
     if (g.forceVacuum || d < player.pickupRadius) {
       // Vacuumed gems use the higher attractSpeed already set on them; normal gems ramp up to 8
       if (!g.forceVacuum) {
-        g.attractSpeed = Math.min(g.attractSpeed + 0.4, 8);
+        g.attractSpeed = Math.min(g.attractSpeed + 0.4 * frameScale, 8);
       }
-      g.x += (dx / (d || 1)) * g.attractSpeed;
-      g.y += (dy / (d || 1)) * g.attractSpeed;
+      g.x += (dx / (d || 1)) * g.attractSpeed * frameScale;
+      g.y += (dy / (d || 1)) * g.attractSpeed * frameScale;
     }
     if (d < player.r + g.r) {
       player.xp += bossesDefeated >= 1 ? g.value * 2 : g.value;
@@ -1935,9 +1938,9 @@ function update(dt) {
     const dx = player.x - hp.x, dy = player.y - hp.y;
     const d = Math.hypot(dx, dy);
     if (d < player.pickupRadius) {
-      hp.attractSpeed = Math.min(hp.attractSpeed + 0.4, 8);
-      hp.x += (dx / (d || 1)) * hp.attractSpeed;
-      hp.y += (dy / (d || 1)) * hp.attractSpeed;
+      hp.attractSpeed = Math.min(hp.attractSpeed + 0.4 * frameScale, 8);
+      hp.x += (dx / (d || 1)) * hp.attractSpeed * frameScale;
+      hp.y += (dy / (d || 1)) * hp.attractSpeed * frameScale;
     }
     if (d < player.r + hp.r) {
       const before = player.hp;
@@ -1955,9 +1958,9 @@ function update(dt) {
     const dx = player.x - mg.x, dy = player.y - mg.y;
     const d = Math.hypot(dx, dy);
     if (d < player.pickupRadius) {
-      mg.attractSpeed = Math.min(mg.attractSpeed + 0.4, 8);
-      mg.x += (dx / (d || 1)) * mg.attractSpeed;
-      mg.y += (dy / (d || 1)) * mg.attractSpeed;
+      mg.attractSpeed = Math.min(mg.attractSpeed + 0.4 * frameScale, 8);
+      mg.x += (dx / (d || 1)) * mg.attractSpeed * frameScale;
+      mg.y += (dy / (d || 1)) * mg.attractSpeed * frameScale;
     }
     if (d < player.r + mg.r) {
       // VACUUM EFFECT — force every gem on the field to high-speed attraction
@@ -1985,8 +1988,9 @@ function update(dt) {
   // --- Particles ---
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx; p.y += p.vy;
-    p.vx *= 0.94; p.vy *= 0.94;
+    p.x += p.vx * frameScale; p.y += p.vy * frameScale;
+    const partFric = Math.pow(0.94, frameScale);
+    p.vx *= partFric; p.vy *= partFric;
     p.life -= dt;
     if (p.life <= 0) particles.splice(i, 1);
   }
@@ -1997,7 +2001,7 @@ function update(dt) {
   }
   for (let i = floatingTexts.length - 1; i >= 0; i--) {
     const t = floatingTexts[i];
-    t.y += t.vy;
+    t.y += t.vy * frameScale;
     t.life -= dt;
     if (t.life <= 0) floatingTexts.splice(i, 1);
   }
