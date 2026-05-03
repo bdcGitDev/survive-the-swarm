@@ -1569,7 +1569,7 @@ function showLevelUp() {
   document.getElementById('levelup').classList.remove('hidden');
 }
 
-// Boss bonus: pick 3 upgrades from the full pool of 9
+// Boss bonus: pick 1 upgrade from 3 random options
 function showBossUpgrade() {
   state = 'levelup';
   const overlay = document.getElementById('levelup');
@@ -1579,8 +1579,8 @@ function showBossUpgrade() {
   const origH2 = h2.textContent;
   h1.textContent = 'BOSS REWARD';
 
-  const remaining = [...UPGRADES];
-  let picksLeft = 3;
+  const remaining = pickUpgrades();
+  let picksLeft = 1;
   const container = document.getElementById('upgrade-choices');
 
   const render = () => {
@@ -1763,10 +1763,12 @@ function update(dt) {
       if (dist < e.r + p.r) {
         e.hp -= p.damage;
         e.hitFlash = 80;
-        // Knockback
-        const kbForce = 4;
-        e.knockbackX = (dx / (dist || 1)) * kbForce;
-        e.knockbackY = (dy / (dist || 1)) * kbForce;
+        // Knockback (bosses are immune)
+        if (!e.isBoss) {
+          const kbForce = 4;
+          e.knockbackX = (dx / (dist || 1)) * kbForce;
+          e.knockbackY = (dy / (dist || 1)) * kbForce;
+        }
         burst(p.x, p.y, '#ffffff', 4, 2);
         p.hit.add(e);
 
@@ -1851,7 +1853,7 @@ function update(dt) {
         floatText(e.x, e.y - 30, 'BOSS DEFEATED!', '#ffd60a');
         bossActive = false;
         bossesDefeated++;
-        // Queue boss-bonus pick-3-from-9 upgrade screen
+        // Queue boss-bonus pick-1-from-3 upgrade screen
         pendingBossUpgradeScreen = true;
         // Queue legendary upgrade screen if any are still unlocked
         if (!player.legendaries.chain || !player.legendaries.flame || !player.legendaries.ice) {
