@@ -1409,6 +1409,7 @@ function spawnEnemy() {
   // Wave-scaled stats
   const hpScale = 1 + (wave - 1) * 0.25;
   const speedScale = 1 + (wave - 1) * 0.04;
+  const dmgScale = 1 + (wave - 1) * 0.025;
 
   // Type roll: more variety as waves go up
   const r = Math.random();
@@ -1417,9 +1418,9 @@ function spawnEnemy() {
   if (wave >= 5 && r > 0.85) type = 'tank';
 
   let stats;
-  if (type === 'fast') stats = { hp: 8 * hpScale, speed: 1.1 * speedScale, r: 9, color: '#ffd60a', dmg: 8 };
-  else if (type === 'tank') stats = { hp: 40 * hpScale, speed: 0.35 * speedScale, r: 18, color: '#ff3b3b', dmg: 18 };
-  else stats = { hp: 12 * hpScale, speed: 0.6 * speedScale, r: 12, color: '#ff2d75', dmg: 10 };
+  if (type === 'fast') stats = { hp: 8 * hpScale, speed: 1.1 * speedScale, r: 9, color: '#ffd60a', dmg: Math.round(8 * dmgScale) };
+  else if (type === 'tank') stats = { hp: 40 * hpScale, speed: 0.35 * speedScale, r: 18, color: '#ff3b3b', dmg: Math.round(18 * dmgScale) };
+  else stats = { hp: 12 * hpScale, speed: 0.6 * speedScale, r: 12, color: '#ff2d75', dmg: Math.round(10 * dmgScale) };
 
   enemies.push({
     x, y,
