@@ -1694,6 +1694,8 @@ function update(dt) {
   // Frame-rate independence: all per-frame movement multiplies by this so the
   // game runs the same speed at 30fps as 60fps. 16.667ms = one 60fps frame.
   const frameScale = dt / 16.667;
+  // Global speed multiplier — bump up to make everything feel snappier.
+  const SPEED_MULT = 2;
   timeMs += dt;
   waveTimer += dt;
   if (waveTimer >= WAVE_DURATION && !bossActive && bossWarning <= 0) {
@@ -1730,8 +1732,8 @@ function update(dt) {
   if (mx || my) {
     const len = Math.hypot(mx, my);
     mx /= len; my /= len;
-    player.x += mx * player.speed * frameScale;
-    player.y += my * player.speed * frameScale;
+    player.x += mx * player.speed * frameScale * SPEED_MULT;
+    player.y += my * player.speed * frameScale * SPEED_MULT;
   }
   player.x = Math.max(player.r, Math.min(W - player.r, player.x));
   player.y = Math.max(player.r, Math.min(H - player.r, player.y));
@@ -1751,8 +1753,8 @@ function update(dt) {
   // --- Projectiles ---
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
-    p.x += p.vx * frameScale;
-    p.y += p.vy * frameScale;
+    p.x += p.vx * frameScale * SPEED_MULT;
+    p.y += p.vy * frameScale * SPEED_MULT;
     p.life -= dt;
     if (p.life <= 0 || p.x < -50 || p.x > W + 50 || p.y < -50 || p.y > H + 50) {
       projectiles.splice(i, 1);
@@ -1831,8 +1833,8 @@ function update(dt) {
     }
 
     // Apply knockback decay
-    e.x += e.knockbackX * frameScale;
-    e.y += e.knockbackY * frameScale;
+    e.x += e.knockbackX * frameScale * SPEED_MULT;
+    e.y += e.knockbackY * frameScale * SPEED_MULT;
     e.knockbackX *= Math.pow(0.7, frameScale);
     e.knockbackY *= Math.pow(0.7, frameScale);
 
@@ -1840,8 +1842,8 @@ function update(dt) {
     const dx = player.x - e.x, dy = player.y - e.y;
     const d = Math.hypot(dx, dy) || 1;
     const effectiveSpeed = e.speed * (e.slowTime > 0 ? e.slowFactor : 1);
-    e.x += (dx / d) * effectiveSpeed * frameScale;
-    e.y += (dy / d) * effectiveSpeed * frameScale;
+    e.x += (dx / d) * effectiveSpeed * frameScale * SPEED_MULT;
+    e.y += (dy / d) * effectiveSpeed * frameScale * SPEED_MULT;
 
     // Death
     if (e.hp <= 0) {
@@ -1916,8 +1918,8 @@ function update(dt) {
       if (!g.forceVacuum) {
         g.attractSpeed = Math.min(g.attractSpeed + 0.4 * frameScale, 8);
       }
-      g.x += (dx / (d || 1)) * g.attractSpeed * frameScale;
-      g.y += (dy / (d || 1)) * g.attractSpeed * frameScale;
+      g.x += (dx / (d || 1)) * g.attractSpeed * frameScale * SPEED_MULT;
+      g.y += (dy / (d || 1)) * g.attractSpeed * frameScale * SPEED_MULT;
     }
     if (d < player.r + g.r) {
       player.xp += bossesDefeated >= 1 ? g.value * 2 : g.value;
@@ -1939,8 +1941,8 @@ function update(dt) {
     const d = Math.hypot(dx, dy);
     if (d < player.pickupRadius) {
       hp.attractSpeed = Math.min(hp.attractSpeed + 0.4 * frameScale, 8);
-      hp.x += (dx / (d || 1)) * hp.attractSpeed * frameScale;
-      hp.y += (dy / (d || 1)) * hp.attractSpeed * frameScale;
+      hp.x += (dx / (d || 1)) * hp.attractSpeed * frameScale * SPEED_MULT;
+      hp.y += (dy / (d || 1)) * hp.attractSpeed * frameScale * SPEED_MULT;
     }
     if (d < player.r + hp.r) {
       const before = player.hp;
@@ -1959,8 +1961,8 @@ function update(dt) {
     const d = Math.hypot(dx, dy);
     if (d < player.pickupRadius) {
       mg.attractSpeed = Math.min(mg.attractSpeed + 0.4 * frameScale, 8);
-      mg.x += (dx / (d || 1)) * mg.attractSpeed * frameScale;
-      mg.y += (dy / (d || 1)) * mg.attractSpeed * frameScale;
+      mg.x += (dx / (d || 1)) * mg.attractSpeed * frameScale * SPEED_MULT;
+      mg.y += (dy / (d || 1)) * mg.attractSpeed * frameScale * SPEED_MULT;
     }
     if (d < player.r + mg.r) {
       // VACUUM EFFECT — force every gem on the field to high-speed attraction
