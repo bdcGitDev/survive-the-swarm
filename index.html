@@ -1,0 +1,2828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SURVIVE THE SWARM</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0a0612;
+    --bg-1: #150a26;
+    --accent: #ff2d75;
+    --accent-2: #00f0ff;
+    --accent-3: #ffd60a;
+    --xp: #7cffb2;
+    --danger: #ff3b3b;
+    --text: #f4ecff;
+    --text-dim: #8a7ea8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg-0);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+  #wrap {
+    position: relative;
+    width: 100vw; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at center, var(--bg-1) 0%, var(--bg-0) 70%),
+      var(--bg-0);
+  }
+  canvas {
+    display: block;
+    background:
+      radial-gradient(circle at 50% 50%, #1a0d33 0%, #0a0612 80%);
+    border: 2px solid rgba(255, 45, 117, 0.4);
+    box-shadow:
+      0 0 60px rgba(255, 45, 117, 0.25),
+      0 0 120px rgba(0, 240, 255, 0.1),
+      inset 0 0 80px rgba(0, 0, 0, 0.6);
+    image-rendering: pixelated;
+  }
+  /* HUD */
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    pointer-events: none;
+    padding: 16px 24px;
+    display: flex; justify-content: space-between;
+    font-family: 'Bungee', cursive;
+    z-index: 200;
+  }
+  .stat {
+    background: rgba(10, 6, 18, 0.85);
+    border: 1px solid rgba(255, 45, 117, 0.5);
+    padding: 8px 16px;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(255, 45, 117, 0.3);
+    backdrop-filter: blur(4px);
+  }
+  .stat .label {
+    font-size: 10px; color: var(--text-dim); letter-spacing: 2px;
+  }
+  .stat .value {
+    font-size: 18px; color: var(--accent-2);
+    text-shadow: 0 0 12px var(--accent-2);
+  }
+  #wave .value { color: var(--accent-3); text-shadow: 0 0 12px var(--accent-3); }
+  #time .value { color: var(--text); text-shadow: 0 0 8px var(--text); }
+
+  /* Records button + dropdown */
+  #records-btn {
+    background: rgba(10, 6, 18, 0.85);
+    border: 1px solid rgba(255, 214, 10, 0.5);
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(255, 214, 10, 0.25);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    pointer-events: auto;
+    color: var(--accent-3);
+    font-family: 'Bungee', cursive;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: all 0.15s ease;
+    text-shadow: 0 0 8px rgba(255, 214, 10, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #records-btn:hover {
+    background: rgba(255, 214, 10, 0.15);
+    box-shadow: 0 0 30px rgba(255, 214, 10, 0.5);
+    transform: translateY(-1px);
+  }
+  #records-btn .arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+  }
+  #records-btn.open .arrow {
+    transform: rotate(180deg);
+  }
+  #records-dropdown {
+    position: absolute;
+    top: 64px;
+    left: 24px;
+    width: 260px;
+    background: rgba(10, 6, 18, 0.95);
+    border: 1px solid rgba(255, 214, 10, 0.5);
+    border-radius: 6px;
+    padding: 18px 20px;
+    box-shadow: 0 0 30px rgba(255, 214, 10, 0.25);
+    backdrop-filter: blur(8px);
+    z-index: 250;
+    pointer-events: auto;
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.6;
+    display: none;
+    animation: dropdownIn 0.18s ease-out;
+  }
+  #records-dropdown.open { display: block; }
+  @keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  #records-dropdown .records-title {
+    font-family: 'Bungee', cursive;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--accent-3);
+    text-shadow: 0 0 10px rgba(255, 214, 10, 0.7);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 214, 10, 0.3);
+    text-align: center;
+  }
+  #records-dropdown .records-subtitle {
+    font-family: 'Bungee', cursive;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-top: 14px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 45, 117, 0.2);
+  }
+  #records-dropdown .row {
+    display: flex; justify-content: space-between;
+    color: var(--text-dim);
+    padding: 3px 0;
+  }
+  #records-dropdown .row span:last-child {
+    color: var(--accent-2);
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+    font-weight: 700;
+  }
+  #records-dropdown .reset-btn {
+    margin-top: 14px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255, 59, 59, 0.4);
+    color: rgba(255, 59, 59, 0.8);
+    padding: 6px 10px;
+    border-radius: 3px;
+    font-family: 'Bungee', cursive;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  #records-dropdown .reset-btn:hover {
+    background: rgba(255, 59, 59, 0.15);
+    color: #ff3b3b;
+  }
+  #records-dropdown .storage-warn {
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-top: 10px;
+    line-height: 1.5;
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  /* New record glow on game over */
+  .new-record {
+    color: var(--accent-3) !important;
+    text-shadow: 0 0 16px var(--accent-3) !important;
+    animation: recordPulse 1s ease-in-out infinite alternate;
+  }
+  @keyframes recordPulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
+  }
+  .new-record-tag {
+    display: block;
+    font-size: 9px;
+    color: var(--accent-3);
+    letter-spacing: 2px;
+    margin-top: 4px;
+    text-shadow: 0 0 8px var(--accent-3);
+    animation: recordPulse 0.8s ease-in-out infinite alternate;
+  }
+
+  /* HP and XP bars at bottom */
+  #bars {
+    position: absolute;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    width: min(560px, 80vw);
+    pointer-events: none;
+    z-index: 200;
+  }
+  .bar-wrap {
+    background: rgba(10, 6, 18, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    height: 14px;
+    margin-bottom: 6px;
+    overflow: hidden;
+    position: relative;
+    backdrop-filter: blur(4px);
+  }
+  .bar-fill {
+    height: 100%;
+    transition: width 0.15s ease-out;
+  }
+  #hp-fill {
+    background: linear-gradient(90deg, #ff3b3b, #ff6b8a);
+    box-shadow: 0 0 12px rgba(255, 59, 59, 0.6);
+  }
+  #xp-fill {
+    background: linear-gradient(90deg, #7cffb2, #00f0ff);
+    box-shadow: 0 0 12px rgba(124, 255, 178, 0.6);
+  }
+  .bar-label {
+    position: absolute;
+    top: 50%; left: 8px;
+    transform: translateY(-50%);
+    font-family: 'Bungee', cursive;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text);
+    text-shadow: 0 0 4px black;
+    z-index: 2;
+  }
+  .bar-value {
+    position: absolute;
+    top: 50%; right: 8px;
+    transform: translateY(-50%);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text);
+    text-shadow: 0 0 4px black;
+    z-index: 2;
+  }
+
+  /* Live stats panel (right side) */
+  #stats-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    bottom: 60px;
+    width: 280px;
+    background: rgba(10, 6, 18, 0.92);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    border-radius: 6px;
+    padding: 20px 22px;
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.22);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    pointer-events: none;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    overflow-y: auto;
+  }
+  #stats-panel .section {
+    margin-bottom: 22px;
+  }
+  #stats-panel .section:last-child { margin-bottom: 0; }
+  #stats-panel .section-title {
+    font-family: 'Bungee', cursive;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(255, 45, 117, 0.7);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 45, 117, 0.3);
+  }
+  #stats-panel .row {
+    display: flex; justify-content: space-between;
+    color: var(--text-dim);
+    padding: 2px 0;
+  }
+  #stats-panel .row span:last-child {
+    color: var(--accent-2);
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    font-weight: 700;
+  }
+  #stats-panel .weapon-name {
+    font-family: 'Bungee', cursive;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--accent-3);
+    text-shadow: 0 0 10px rgba(255, 214, 10, 0.7);
+    margin-bottom: 12px;
+    text-align: center;
+    padding: 8px 0;
+    border: 1px solid rgba(255, 214, 10, 0.25);
+    border-radius: 3px;
+    background: rgba(255, 214, 10, 0.05);
+  }
+
+  /* Transparent pause overlay (gameplay still visible) */
+  .overlay.transparent {
+    background: rgba(10, 6, 18, 0.35);
+    backdrop-filter: blur(1px);
+    pointer-events: none;
+  }
+  .pause-icon {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  .pause-icon .bar {
+    width: 22px;
+    height: 80px;
+    background: var(--accent-2);
+    border-radius: 4px;
+    box-shadow:
+      0 0 20px rgba(0, 240, 255, 0.7),
+      0 0 40px rgba(0, 240, 255, 0.4);
+  }
+  .overlay.transparent h2 {
+    color: var(--accent-2);
+    text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  }
+
+  /* === HUB CHROME (shared across hub pages) === */
+  /* The hub now uses a single overlay (#hub) that contains a top bar
+     with gem balance + records icon, tab strip, and a swap-able page area. */
+  #hub {
+    padding: 24px 32px;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  .hub-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; max-width: 920px;
+    margin: 0 auto 18px;
+    gap: 16px;
+  }
+  .hub-game-title {
+    font-family: 'Bungee', cursive;
+    font-size: clamp(20px, 3vw, 28px);
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-3), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(255, 45, 117, 0.3);
+    line-height: 1;
+  }
+  .hub-topbar-right {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .hub-icon-btn {
+    background: rgba(10, 6, 18, 0.85);
+    border: 1px solid rgba(255, 214, 10, 0.4);
+    color: var(--accent-3);
+    padding: 10px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s ease;
+    box-shadow: 0 0 16px rgba(255, 214, 10, 0.2);
+  }
+  .hub-icon-btn:hover {
+    background: rgba(255, 214, 10, 0.12);
+    box-shadow: 0 0 28px rgba(255, 214, 10, 0.45);
+    transform: translateY(-1px);
+  }
+  .gem-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(124, 255, 178, 0.08);
+    border: 1px solid rgba(124, 255, 178, 0.4);
+    padding: 10px 18px;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(124, 255, 178, 0.25);
+    font-family: 'Bungee', cursive;
+  }
+  .gem-balance .gem-icon {
+    width: 18px; height: 18px;
+    background: var(--xp);
+    transform: rotate(45deg);
+    box-shadow: 0 0 12px var(--xp);
+  }
+  .gem-balance .gem-amt {
+    font-size: 20px;
+    color: var(--xp);
+    text-shadow: 0 0 10px rgba(124, 255, 178, 0.7);
+    letter-spacing: 2px;
+  }
+  .gem-balance .gem-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  /* Tab strip */
+  .hub-tabs {
+    display: flex;
+    gap: 6px;
+    width: 100%; max-width: 920px;
+    margin: 0 auto 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .hub-tab {
+    font-family: 'Bungee', cursive;
+    font-size: 13px;
+    letter-spacing: 2.5px;
+    padding: 14px 28px;
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    margin-bottom: -1px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hub-tab:hover {
+    color: var(--text);
+  }
+  .hub-tab.active {
+    color: var(--accent-2);
+    border-bottom-color: var(--accent-2);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  }
+  .hub-tab .tab-icon {
+    font-size: 16px;
+  }
+
+  /* Page area inside hub */
+  .hub-page {
+    width: 100%; max-width: 920px;
+    margin: 0 auto;
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hub-page.active { display: flex; }
+
+  /* === HOME page === */
+  .home-page {
+    justify-content: center;
+    padding: 40px 0;
+  }
+  .character-stage {
+    position: relative;
+    width: 280px; height: 280px;
+    margin: 20px auto 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .character-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0) 65%);
+    animation: stagePulse 3s ease-in-out infinite alternate;
+  }
+  .character-stage::after {
+    content: '';
+    position: absolute;
+    bottom: 28px;
+    width: 140px; height: 14px;
+    background: radial-gradient(ellipse, rgba(0, 240, 255, 0.45) 0%, rgba(0, 240, 255, 0) 70%);
+    filter: blur(2px);
+  }
+  @keyframes stagePulse {
+    from { opacity: 0.7; transform: scale(1); }
+    to   { opacity: 1; transform: scale(1.05); }
+  }
+  .character-svg {
+    position: relative;
+    z-index: 2;
+    animation: charBob 2.4s ease-in-out infinite alternate;
+  }
+  @keyframes charBob {
+    from { transform: translateY(-4px); }
+    to   { transform: translateY(4px); }
+  }
+  .home-action {
+    text-align: center;
+  }
+  .home-action .resume-tag {
+    font-family: 'Bungee', cursive;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent-3);
+    text-shadow: 0 0 8px rgba(255, 214, 10, 0.6);
+    margin-bottom: 10px;
+    display: none;
+  }
+  .home-action.has-run .resume-tag { display: block; }
+  .play-btn {
+    font-family: 'Bungee', cursive;
+    font-size: 22px;
+    letter-spacing: 5px;
+    padding: 22px 56px;
+    background: rgba(255, 45, 117, 0.12);
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border-radius: 4px;
+    box-shadow: 0 0 30px rgba(255, 45, 117, 0.4);
+  }
+  .play-btn:hover {
+    background: var(--accent);
+    color: var(--bg-0);
+    box-shadow: 0 0 50px rgba(255, 45, 117, 0.7);
+    transform: translateY(-3px);
+  }
+  .home-action.has-run .play-btn {
+    color: var(--accent-3);
+    border-color: var(--accent-3);
+    background: rgba(255, 214, 10, 0.12);
+    box-shadow: 0 0 30px rgba(255, 214, 10, 0.4);
+  }
+  .home-action.has-run .play-btn:hover {
+    background: var(--accent-3);
+    color: var(--bg-0);
+    box-shadow: 0 0 50px rgba(255, 214, 10, 0.7);
+  }
+  .home-keys {
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .home-abandon-link {
+    margin-top: 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+    letter-spacing: 1px;
+    display: none;
+  }
+  .home-action.has-run .home-abandon-link { display: inline-block; }
+  .home-abandon-link:hover { color: #ff3b3b; }
+
+  /* === SHOP / UPGRADES placeholder pages === */
+  .placeholder-card {
+    background: rgba(20, 10, 38, 0.7);
+    border: 1px dashed rgba(255, 214, 10, 0.4);
+    border-radius: 6px;
+    padding: 60px 40px;
+    text-align: center;
+    width: 100%;
+  }
+  .placeholder-card .lock-icon {
+    font-size: 48px;
+    margin-bottom: 18px;
+    opacity: 0.7;
+  }
+  .placeholder-card h3 {
+    font-family: 'Bungee', cursive;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--accent-3);
+    text-shadow: 0 0 12px rgba(255, 214, 10, 0.5);
+    margin-bottom: 12px;
+  }
+  .placeholder-card p {
+    color: var(--text-dim);
+    line-height: 1.7;
+    font-size: 13px;
+    max-width: 520px;
+    margin: 0 auto 16px;
+  }
+  .coming-soon-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .coming-soon-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: left;
+  }
+  .coming-soon-item .item-name {
+    font-family: 'Bungee', cursive;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Pause overlay home button */
+  .pause-actions {
+    display: flex; gap: 14px; margin-top: 24px;
+    pointer-events: auto;
+  }
+  .pause-actions .pause-btn {
+    font-family: 'Bungee', cursive;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    padding: 10px 22px;
+    background: rgba(10, 6, 18, 0.9);
+    color: var(--text);
+    border: 1px solid rgba(0, 240, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 3px;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
+  }
+  .pause-actions .pause-btn:hover {
+    background: rgba(0, 240, 255, 0.12);
+    border-color: var(--accent-2);
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.5);
+  }
+  .pause-actions .pause-btn.warn {
+    border-color: rgba(255, 214, 10, 0.5);
+    box-shadow: 0 0 16px rgba(255, 214, 10, 0.2);
+  }
+  .pause-actions .pause-btn.warn:hover {
+    background: rgba(255, 214, 10, 0.12);
+    border-color: var(--accent-3);
+    box-shadow: 0 0 24px rgba(255, 214, 10, 0.5);
+  }
+
+  /* Gems-earned section in game over */
+  .gems-earned {
+    background: rgba(124, 255, 178, 0.06);
+    border: 1px solid rgba(124, 255, 178, 0.3);
+    border-radius: 4px;
+    padding: 14px 22px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .gems-earned .label {
+    font-family: 'Bungee', cursive;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .gems-earned .value {
+    font-family: 'Bungee', cursive;
+    font-size: 24px;
+    color: var(--xp);
+    text-shadow: 0 0 12px rgba(124, 255, 178, 0.6);
+    letter-spacing: 2px;
+  }
+  .gems-earned .breakdown {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+  .gameover-buttons {
+    display: flex; gap: 16px;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .btn.secondary {
+    color: var(--text-dim);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: none;
+  }
+  .btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    border-color: var(--text);
+  }
+
+  /* Hide in-game HUD when not playing */
+  .ingame-only.hidden { display: none !important; }
+
+  /* Overlays (start, level-up, game over) */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 6, 18, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 24px;
+    text-align: center;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h1 {
+    font-family: 'Bungee', cursive;
+    font-size: clamp(36px, 7vw, 72px);
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-3), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 40px rgba(255, 45, 117, 0.4);
+    margin-bottom: 12px;
+    line-height: 1;
+  }
+  .overlay h2 {
+    font-family: 'Bungee', cursive;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+  }
+  .overlay p {
+    color: var(--text-dim);
+    max-width: 480px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+  .overlay p strong { color: var(--accent-2); }
+  .btn {
+    font-family: 'Bungee', cursive;
+    font-size: 16px;
+    letter-spacing: 3px;
+    padding: 14px 32px;
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 2px;
+    box-shadow: 0 0 20px rgba(255, 45, 117, 0.3);
+  }
+  .btn:hover {
+    background: var(--accent);
+    color: var(--bg-0);
+    box-shadow: 0 0 40px rgba(255, 45, 117, 0.6);
+    transform: translateY(-2px);
+  }
+
+  /* Level-up upgrade cards */
+  #upgrade-choices {
+    display: flex; gap: 16px;
+    flex-wrap: wrap; justify-content: center;
+    margin-top: 24px;
+  }
+  .upgrade-card {
+    background: rgba(20, 10, 38, 0.9);
+    border: 2px solid rgba(0, 240, 255, 0.4);
+    padding: 24px 20px;
+    width: 200px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+  }
+  .upgrade-card:hover {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
+    transform: translateY(-4px);
+  }
+  .upgrade-card .icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  .upgrade-card .name {
+    font-family: 'Bungee', cursive;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    color: var(--accent-2);
+    margin-bottom: 8px;
+  }
+  .upgrade-card .desc {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+  .upgrade-card .level {
+    margin-top: 12px;
+    font-size: 10px;
+    color: var(--accent-3);
+    letter-spacing: 1.5px;
+  }
+
+  /* Legendary upgrade screen */
+  #legendary {
+    background: rgba(20, 10, 38, 0.92);
+  }
+  #legendary .legendary-title {
+    background: linear-gradient(90deg, var(--accent-3), #c084fc, var(--accent-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 50px rgba(255, 214, 10, 0.4);
+    animation: legendaryPulse 1.6s ease-in-out infinite alternate;
+  }
+  @keyframes legendaryPulse {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.25); }
+  }
+  #legendary h2 {
+    color: #c084fc;
+    text-shadow: 0 0 12px rgba(192, 132, 252, 0.6);
+  }
+  #legendary-choices {
+    display: flex; gap: 16px;
+    flex-wrap: wrap; justify-content: center;
+    margin-top: 24px;
+  }
+  .legendary-card {
+    background: rgba(40, 20, 60, 0.95);
+    border: 2px solid rgba(255, 214, 10, 0.55);
+    padding: 28px 22px;
+    width: 220px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border-radius: 4px;
+    box-shadow: 0 0 24px rgba(255, 214, 10, 0.25);
+    position: relative;
+  }
+  .legendary-card:hover {
+    border-color: var(--accent-3);
+    box-shadow: 0 0 50px rgba(255, 214, 10, 0.6);
+    transform: translateY(-5px) scale(1.02);
+    background: rgba(60, 30, 80, 0.95);
+  }
+  .legendary-card.owned {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+  }
+  .legendary-card.owned:hover {
+    transform: none;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+    background: rgba(40, 20, 60, 0.95);
+  }
+  .legendary-card .icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+    text-align: center;
+  }
+  .legendary-card .name {
+    font-family: 'Bungee', cursive;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--accent-3);
+    text-shadow: 0 0 10px rgba(255, 214, 10, 0.6);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .legendary-card .desc {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    text-align: center;
+  }
+  .legendary-card .owned-tag {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-family: 'Bungee', cursive;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 8px;
+    border-radius: 2px;
+    display: none;
+  }
+  .legendary-card.owned .owned-tag { display: block; }
+
+  /* Left-side legendaries panel */
+  #legendaries-panel {
+    position: absolute;
+    top: 240px;
+    left: 24px;
+    width: 200px;
+    background: rgba(10, 6, 18, 0.85);
+    border: 1px solid rgba(255, 214, 10, 0.4);
+    border-radius: 4px;
+    padding: 12px 14px;
+    box-shadow: 0 0 20px rgba(255, 214, 10, 0.2);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    pointer-events: none;
+    color: var(--text);
+  }
+  #legendaries-panel .legendaries-title {
+    font-family: 'Bungee', cursive;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    color: var(--accent-3);
+    text-shadow: 0 0 8px rgba(255, 214, 10, 0.6);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 214, 10, 0.25);
+    text-align: center;
+  }
+  #legendaries-panel .leg-empty {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    padding: 6px 0;
+  }
+  #legendaries-panel .leg-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 4px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    background: rgba(255, 214, 10, 0.06);
+    animation: legNew 1.6s ease-in-out;
+  }
+  #legendaries-panel .leg-item:last-child { margin-bottom: 0; }
+  @keyframes legNew {
+    0% { background: rgba(255, 214, 10, 0.4); transform: scale(1.05); }
+    100% { background: rgba(255, 214, 10, 0.06); transform: scale(1); }
+  }
+  #legendaries-panel .leg-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+  #legendaries-panel .leg-name {
+    font-family: 'Bungee', cursive;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--accent-3);
+    text-shadow: 0 0 6px rgba(255, 214, 10, 0.4);
+  }
+
+  #game-over h1 {
+    background: linear-gradient(90deg, var(--danger), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .stat-row {
+    display: flex; gap: 32px; margin-bottom: 24px;
+    font-family: 'Bungee', cursive;
+  }
+  .stat-row .stat-block {
+    text-align: center;
+  }
+  .stat-row .label {
+    font-size: 10px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 4px;
+  }
+  .stat-row .value {
+    font-size: 28px; color: var(--accent-3);
+    text-shadow: 0 0 12px var(--accent-3);
+  }
+
+  /* Tiny instruction line */
+  .keys {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .keys kbd {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-family: inherit;
+    margin: 0 2px;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="1050" height="700"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="ingame-only hidden">
+    <div style="display:flex; gap:12px; align-items:center;">
+      <div class="stat" id="wave">
+        <div class="label">WAVE</div>
+        <div class="value" id="wave-val">1</div>
+      </div>
+      <button id="records-btn" type="button">
+        🏆 RECORDS <span class="arrow">▼</span>
+      </button>
+    </div>
+    <div class="stat" id="time">
+      <div class="label">TIME</div>
+      <div class="value" id="time-val">0:00</div>
+    </div>
+    <div class="stat" id="kills">
+      <div class="label">KILLS</div>
+      <div class="value" id="kills-val">0</div>
+    </div>
+  </div>
+
+  <!-- Records dropdown -->
+  <div id="records-dropdown">
+    <div class="records-title">🏆 ALL-TIME RECORDS</div>
+    <div class="records-subtitle">BEST SINGLE RUN</div>
+    <div class="row"><span>Highest Wave</span><span id="rec-wave">1</span></div>
+    <div class="row"><span>Longest Time</span><span id="rec-time">0:00</span></div>
+    <div class="row"><span>Most Kills</span><span id="rec-kills">0</span></div>
+    <div class="row"><span>Highest Level</span><span id="rec-level">1</span></div>
+    <div class="records-subtitle">LIFETIME TOTALS</div>
+    <div class="row"><span>Total Runs</span><span id="rec-runs">0</span></div>
+    <div class="row"><span>Total Kills</span><span id="rec-totalkills">0</span></div>
+    <button class="reset-btn" id="reset-records">RESET RECORDS</button>
+    <div class="storage-warn" id="storage-warn"></div>
+  </div>
+
+  <!-- Legendaries panel (left side, in-game only) -->
+  <div id="legendaries-panel" class="ingame-only hidden">
+    <div class="legendaries-title">★ LEGENDARIES</div>
+    <div id="legendaries-list">
+      <div class="leg-empty">none yet — defeat a boss</div>
+    </div>
+  </div>
+
+  <!-- Live stats panel -->
+  <div id="stats-panel" class="ingame-only hidden">
+    <div class="section">
+      <div class="section-title">PLAYER</div>
+      <div class="row"><span>HP</span><span id="sp-hp">100 / 100</span></div>
+      <div class="row"><span>Level</span><span id="sp-level">1</span></div>
+      <div class="row"><span>XP</span><span id="sp-xp">0 / 5</span></div>
+      <div class="row"><span>Move Spd</span><span id="sp-move">1.5</span></div>
+      <div class="row"><span>Magnet</span><span id="sp-magnet">50</span></div>
+    </div>
+    <div class="section">
+      <div class="section-title">WEAPON</div>
+      <div class="weapon-name" id="sp-weapon">SLINGSHOT</div>
+      <div class="row"><span>Damage</span><span id="sp-dmg">10</span></div>
+      <div class="row"><span>Fire Rate</span><span id="sp-rate">1.43/s</span></div>
+      <div class="row"><span>Proj. Spd</span><span id="sp-pspd">7</span></div>
+      <div class="row"><span>Proj. Count</span><span id="sp-pcnt">1</span></div>
+      <div class="row"><span>Pierce</span><span id="sp-pierce">0</span></div>
+    </div>
+    <div class="section">
+      <div class="section-title">ARENA</div>
+      <div class="row"><span>Wave</span><span id="sp-wave">1</span></div>
+      <div class="row"><span>Enemies</span><span id="sp-enemies">0</span></div>
+      <div class="row"><span>Kills</span><span id="sp-kills">0</span></div>
+      <div class="row"><span>Time</span><span id="sp-time">0:00</span></div>
+    </div>
+  </div>
+
+  <!-- Bottom bars -->
+  <div id="bars" class="ingame-only hidden">
+    <div class="bar-wrap">
+      <div class="bar-fill" id="hp-fill" style="width:100%;"></div>
+      <span class="bar-label">HP</span>
+      <span class="bar-value" id="hp-val">100 / 100</span>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-fill" id="xp-fill" style="width:0%;"></div>
+      <span class="bar-label">LV 1</span>
+      <span class="bar-value" id="xp-val">0 / 5</span>
+    </div>
+  </div>
+
+  <!-- HOME HUB (tabbed) -->
+  <div class="overlay" id="hub">
+    <div class="hub-topbar">
+      <div class="hub-game-title">SURVIVE THE SWARM</div>
+      <div class="hub-topbar-right">
+        <div class="gem-balance">
+          <div class="gem-icon"></div>
+          <div>
+            <div class="gem-label">GEMS</div>
+            <div class="gem-amt" id="hub-gems">0</div>
+          </div>
+        </div>
+        <button class="hub-icon-btn" id="hub-records-btn" title="Records">🏆</button>
+      </div>
+    </div>
+
+    <div class="hub-tabs">
+      <button class="hub-tab active" data-tab="home"><span class="tab-icon">🏠</span> HOME</button>
+      <button class="hub-tab" data-tab="shop"><span class="tab-icon">🛒</span> SHOP</button>
+      <button class="hub-tab" data-tab="upgrades"><span class="tab-icon">⚡</span> UPGRADES</button>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div class="hub-page home-page active" id="page-home">
+      <div class="character-stage">
+        <svg class="character-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="charGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="60" cy="60" r="55" fill="url(#charGlow)"/>
+          <circle cx="60" cy="60" r="28" fill="#00f0ff" stroke="#ffffff" stroke-width="3"/>
+          <circle cx="60" cy="60" r="11" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div class="home-action" id="home-action">
+        <div class="resume-tag">★ RUN IN PROGRESS ★</div>
+        <button class="play-btn" id="hub-play-btn">▶ START</button>
+        <div class="home-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp;·&nbsp; <kbd>P</kbd> pause</div>
+        <button class="home-abandon-link" id="hub-abandon-btn">abandon current run</button>
+      </div>
+    </div>
+
+    <!-- SHOP PAGE -->
+    <div class="hub-page" id="page-shop">
+      <div class="placeholder-card">
+        <div class="lock-icon">🛒</div>
+        <h3>SHOP COMING SOON</h3>
+        <p>Spend your hard-earned gems on cosmetics, characters, and consumables that change how each run starts.</p>
+        <p style="font-size:11px; opacity:0.7;">Keep grinding — your gems will be waiting when the shop opens.</p>
+        <div class="coming-soon-list">
+          <div class="coming-soon-item"><span class="item-name">🎭 NEW CHARACTERS</span>Different starting builds and visuals</div>
+          <div class="coming-soon-item"><span class="item-name">🗡️ NEW WEAPONS</span>Knives, fireballs, boomerangs</div>
+          <div class="coming-soon-item"><span class="item-name">🎨 SKINS</span>Cosmetic palettes for your character</div>
+          <div class="coming-soon-item"><span class="item-name">🎲 MYSTERY BOX</span>Random rare unlocks</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPGRADES PAGE -->
+    <div class="hub-page" id="page-upgrades">
+      <div class="placeholder-card">
+        <div class="lock-icon">⚡</div>
+        <h3>UPGRADES COMING SOON</h3>
+        <p>Spend gems on permanent stat boosts that apply to every run. Stack passive bonuses to push deeper into the swarm.</p>
+        <p style="font-size:11px; opacity:0.7;">Earn gems by surviving waves and defeating bosses.</p>
+        <div class="coming-soon-list">
+          <div class="coming-soon-item"><span class="item-name">⚔️ STARTING DAMAGE</span>+1 base damage per level</div>
+          <div class="coming-soon-item"><span class="item-name">❤️ STARTING HP</span>+10 max HP per level</div>
+          <div class="coming-soon-item"><span class="item-name">⚡ STARTING FIRE RATE</span>−5% cooldown per level</div>
+          <div class="coming-soon-item"><span class="item-name">🧲 STARTING MAGNET</span>+10% pickup radius per level</div>
+          <div class="coming-soon-item"><span class="item-name">👟 STARTING SPEED</span>+5% move speed per level</div>
+          <div class="coming-soon-item"><span class="item-name">💰 GEM MULTIPLIER</span>+10% gems earned per level</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level up screen -->
+  <div class="overlay hidden" id="levelup">
+    <h1>LEVEL UP</h1>
+    <h2>choose an upgrade</h2>
+    <div id="upgrade-choices"></div>
+  </div>
+
+  <!-- Legendary upgrade screen (boss reward) -->
+  <div class="overlay hidden" id="legendary">
+    <h1 class="legendary-title">★ LEGENDARY ★</h1>
+    <h2>weapon evolution unlocked</h2>
+    <div id="legendary-choices"></div>
+  </div>
+
+  <!-- Game over screen -->
+  <div class="overlay hidden" id="game-over">
+    <h1>YOU DIED</h1>
+    <h2>the swarm has won... for now</h2>
+    <div class="stat-row">
+      <div class="stat-block">
+        <div class="label">SURVIVED</div>
+        <div class="value" id="go-time">0:00</div>
+        <span class="new-record-tag" id="go-time-new" style="display:none;">★ NEW RECORD ★</span>
+      </div>
+      <div class="stat-block">
+        <div class="label">WAVE</div>
+        <div class="value" id="go-wave">1</div>
+        <span class="new-record-tag" id="go-wave-new" style="display:none;">★ NEW RECORD ★</span>
+      </div>
+      <div class="stat-block">
+        <div class="label">KILLS</div>
+        <div class="value" id="go-kills">0</div>
+        <span class="new-record-tag" id="go-kills-new" style="display:none;">★ NEW RECORD ★</span>
+      </div>
+      <div class="stat-block">
+        <div class="label">LEVEL</div>
+        <div class="value" id="go-level">1</div>
+        <span class="new-record-tag" id="go-level-new" style="display:none;">★ NEW RECORD ★</span>
+      </div>
+    </div>
+    <div class="gems-earned">
+      <div class="label">GEMS EARNED</div>
+      <div class="value">+<span id="go-gems-earned">0</span></div>
+      <div class="breakdown" id="go-gems-breakdown"></div>
+    </div>
+    <div class="gameover-buttons">
+      <button class="btn" id="restart-btn">▶  PLAY AGAIN</button>
+      <button class="btn secondary" id="hub-return-btn">🏠  HOME</button>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div class="overlay transparent hidden" id="pause">
+    <div class="pause-icon">
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+    <h2>PAUSED — PRESS P TO RESUME</h2>
+    <div class="pause-actions">
+      <button class="pause-btn" id="pause-resume-btn">▶ RESUME</button>
+      <button class="pause-btn warn" id="pause-home-btn">🏠 HOME</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================================
+// SURVIVE THE SWARM — v0.1
+// =============================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+// --- Game state ---
+let state = 'start'; // start | playing | levelup | gameover | paused
+let timeMs = 0;
+let lastFrame = 0;
+let frameDelta = 0;
+let kills = 0;
+let wave = 1;
+let waveTimer = 0;
+const WAVE_DURATION = 20000; // 20s per wave
+
+// Entities
+let player, enemies = [], projectiles = [], gems = [], healthPacks = [], magnets = [], particles = [], floatingTexts = [];
+
+// Boss state
+let bossActive = false;
+let bossWarning = 0; // ms remaining on warning
+let bossSpawnPending = false;
+let lastBossWave = 0;
+let bossesDefeated = 0; // run-scoped counter for gem rewards
+let pendingLegendaryScreen = false;
+let pendingBossUpgradeScreen = false;
+let lightningArcs = [];
+
+// Input
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === 'p') togglePause();
+});
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+// =============================================================
+// PLAYER
+// =============================================================
+function makePlayer() {
+  return {
+    x: W/2, y: H/2,
+    r: 14,
+    speed: 1.5,
+    hp: 100, maxHp: 100,
+    level: 1, xp: 0, xpToNext: 5,
+    // weapon
+    fireCooldown: 0,
+    fireRate: 700,        // ms between shots
+    projDamage: 10,
+    projSpeed: 7,
+    projCount: 1,
+    projPierce: 0,
+    pickupRadius: 50,
+    // damage flash
+    hurtFlash: 0,
+    // Legendary weapon upgrades (boss rewards)
+    legendaries: {
+      chain: false,   // Chain Lightning: projectiles bounce up to 3 times
+      flame: false,   // Flame Shot: projectiles ignite enemies (DoT)
+      ice: false,     // Ice Shot: projectiles slow enemies
+    },
+  };
+}
+
+// =============================================================
+// SPAWN ENEMIES
+// =============================================================
+function spawnEnemy() {
+  // Spawn from edge
+  const side = Math.floor(Math.random() * 4);
+  let x, y;
+  if (side === 0) { x = -20; y = Math.random() * H; }
+  else if (side === 1) { x = W + 20; y = Math.random() * H; }
+  else if (side === 2) { x = Math.random() * W; y = -20; }
+  else                 { x = Math.random() * W; y = H + 20; }
+
+  // Wave-scaled stats
+  const hpScale = 1 + (wave - 1) * 0.25;
+  const speedScale = 1 + (wave - 1) * 0.04;
+
+  // Type roll: more variety as waves go up
+  const r = Math.random();
+  let type = 'grunt';
+  if (wave >= 3 && r < 0.18) type = 'fast';
+  if (wave >= 5 && r > 0.85) type = 'tank';
+
+  let stats;
+  if (type === 'fast') stats = { hp: 8 * hpScale, speed: 1.1 * speedScale, r: 9, color: '#ffd60a', dmg: 8 };
+  else if (type === 'tank') stats = { hp: 40 * hpScale, speed: 0.35 * speedScale, r: 18, color: '#ff3b3b', dmg: 18 };
+  else stats = { hp: 12 * hpScale, speed: 0.6 * speedScale, r: 12, color: '#ff2d75', dmg: 10 };
+
+  enemies.push({
+    x, y,
+    r: stats.r,
+    hp: stats.hp, maxHp: stats.hp,
+    speed: stats.speed,
+    color: stats.color,
+    dmg: stats.dmg,
+    type,
+    hitFlash: 0,
+    knockbackX: 0, knockbackY: 0,
+    // Status effects (applied by legendary weapon upgrades)
+    burnTime: 0,         // ms remaining on burn
+    burnDamagePerSec: 0, // damage/sec while burning
+    burnTickAccum: 0,    // accumulator for tick timing
+    slowTime: 0,         // ms remaining on slow
+    slowFactor: 1,       // multiplier on speed (e.g. 0.4 = 60% slower)
+  });
+}
+
+function spawnBoss() {
+  // Spawn from a random edge, dramatic entrance
+  const side = Math.floor(Math.random() * 4);
+  let x, y;
+  if (side === 0) { x = -40; y = H/2; }
+  else if (side === 1) { x = W + 40; y = H/2; }
+  else if (side === 2) { x = W/2; y = -40; }
+  else                 { x = W/2; y = H + 40; }
+
+  // Boss HP scales hard with wave: tougher every 10 waves
+  const bossTier = Math.floor(wave / 10); // 1, 2, 3...
+  const hp = 400 + (bossTier - 1) * 350; // wave 10: 400, wave 20: 750, wave 30: 1100
+  const speed = 0.35 + bossTier * 0.05;
+  const dmg = 25 + bossTier * 5;
+  const radius = 38;
+
+  enemies.push({
+    x, y,
+    r: radius,
+    hp, maxHp: hp,
+    speed,
+    color: '#a855f7',  // purple, distinct from regular enemies
+    dmg,
+    type: 'boss',
+    hitFlash: 0,
+    knockbackX: 0, knockbackY: 0,
+    isBoss: true,
+    burnTime: 0,
+    burnDamagePerSec: 0,
+    burnTickAccum: 0,
+    slowTime: 0,
+    slowFactor: 1,
+  });
+  bossActive = true;
+  bossSpawnPending = false;
+  floatText(W/2, H/2, '⚠ BOSS ⚠', '#a855f7');
+}
+
+let spawnTimer = 0;
+function updateSpawning(dt) {
+  // No new normal enemies during a boss fight
+  if (bossActive || bossSpawnPending || bossWarning > 0) return;
+
+  // spawn rate scales with wave
+  const spawnInterval = Math.max(180, 1000 - wave * 70);
+  spawnTimer += dt;
+  while (spawnTimer >= spawnInterval) {
+    spawnTimer -= spawnInterval;
+    spawnEnemy();
+  }
+}
+
+// =============================================================
+// PROJECTILES
+// =============================================================
+function fireWeapon() {
+  // Find nearest enemy
+  if (enemies.length === 0) return;
+  let nearest = null, nd = Infinity;
+  for (const e of enemies) {
+    const dx = e.x - player.x, dy = e.y - player.y;
+    const d = dx*dx + dy*dy;
+    if (d < nd) { nd = d; nearest = e; }
+  }
+  if (!nearest) return;
+
+  const baseAngle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+  // Spread for multi-projectile
+  const spread = 0.18;
+  for (let i = 0; i < player.projCount; i++) {
+    let a = baseAngle;
+    if (player.projCount > 1) {
+      const offset = (i - (player.projCount - 1) / 2) * spread;
+      a = baseAngle + offset;
+    }
+    projectiles.push({
+      x: player.x, y: player.y,
+      vx: Math.cos(a) * player.projSpeed,
+      vy: Math.sin(a) * player.projSpeed,
+      r: 4,
+      damage: player.projDamage,
+      pierce: player.projPierce,
+      hit: new Set(),
+      life: 1500,
+      chainsLeft: player.legendaries.chain ? 3 : 0,
+    });
+  }
+}
+
+// =============================================================
+// CHAIN LIGHTNING
+// =============================================================
+function triggerChainLightning(fromEnemy, damage, chainsLeft, alreadyHit) {
+  let current = fromEnemy;
+  let remainingChains = chainsLeft;
+  let currentDamage = damage;
+
+  while (remainingChains > 0) {
+    // Find the nearest enemy that hasn't been hit yet
+    let nextTarget = null;
+    let nearest = Infinity;
+    const range = 180; // chain bounce range in pixels
+    for (const e of enemies) {
+      if (alreadyHit.has(e)) continue;
+      const dx = e.x - current.x, dy = e.y - current.y;
+      const d = Math.hypot(dx, dy);
+      if (d < nearest && d < range) {
+        nearest = d;
+        nextTarget = e;
+      }
+    }
+    if (!nextTarget) break;
+
+    // Damage and apply same-hit effects
+    nextTarget.hp -= currentDamage;
+    nextTarget.hitFlash = 80;
+    alreadyHit.add(nextTarget);
+    if (player.legendaries.flame) {
+      nextTarget.burnTime = 3000;
+      nextTarget.burnDamagePerSec = player.projDamage * 0.5;
+      nextTarget.burnTickAccum = 0;
+    }
+    if (player.legendaries.ice) {
+      nextTarget.slowTime = 2000;
+      nextTarget.slowFactor = 0.4;
+    }
+
+    // Visual arc from current to next
+    lightningArcs.push({
+      x1: current.x, y1: current.y,
+      x2: nextTarget.x, y2: nextTarget.y,
+      life: 200, maxLife: 200,
+    });
+
+    current = nextTarget;
+    remainingChains--;
+    currentDamage *= 0.7;
+  }
+}
+
+// =============================================================
+// PARTICLES
+// =============================================================
+function burst(x, y, color, count = 8, speed = 3) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = (0.5 + Math.random()) * speed;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s,
+      life: 400 + Math.random() * 300,
+      maxLife: 700,
+      color,
+      r: 1 + Math.random() * 2,
+    });
+  }
+}
+
+function floatText(x, y, text, color = '#fff') {
+  floatingTexts.push({ x, y, text, color, life: 800, maxLife: 800, vy: -0.6 });
+}
+
+// =============================================================
+// GEMS
+// =============================================================
+function dropGem(x, y, value = 1) {
+  gems.push({ x, y, r: 5, value, life: 30000, attractSpeed: 0 });
+}
+
+function dropHealthPack(x, y) {
+  healthPacks.push({ x, y, r: 9, value: 15, attractSpeed: 0 });
+}
+
+function dropMagnet(x, y) {
+  magnets.push({ x, y, r: 10, attractSpeed: 0 });
+}
+
+// =============================================================
+// UPGRADES
+// =============================================================
+const UPGRADES = [
+  { id: 'damage',    icon: '⚔️',  name: 'Sharper Stones',  desc: '+25% projectile damage',         apply: p => p.projDamage *= 1.25 },
+  { id: 'firerate',  icon: '⚡',  name: 'Quick Hands',     desc: '−15% slingshot cooldown',         apply: p => p.fireRate *= 0.85 },
+  { id: 'speed',     icon: '👟', name: 'Light Feet',       desc: '+15% movement speed',             apply: p => p.speed *= 1.15 },
+  { id: 'maxhp',     icon: '❤️',  name: 'Tough Skin',      desc: '+25 max HP, full heal',            apply: p => { p.maxHp += 25; p.hp = p.maxHp; } },
+  { id: 'projspeed', icon: '💨', name: 'Whip Snap',        desc: '+30% projectile speed',           apply: p => p.projSpeed *= 1.30 },
+  { id: 'multishot', icon: '🎯', name: 'Split Shot',       desc: '+1 projectile per shot',          apply: p => p.projCount += 1 },
+  { id: 'pickup',    icon: '🧲', name: 'Magnet',           desc: '+50% XP pickup radius',           apply: p => p.pickupRadius *= 1.5 },
+  { id: 'pierce',    icon: '🔱', name: 'Piercer',          desc: '+1 enemy pierce per projectile',  apply: p => p.projPierce += 1 },
+  { id: 'regen',     icon: '✨', name: 'Recovery',         desc: 'Heal 20 HP now',                  apply: p => { p.hp = Math.min(p.maxHp, p.hp + 20); } },
+];
+
+function pickUpgrades() {
+  // Pick 3 unique upgrades
+  const pool = [...UPGRADES];
+  const picks = [];
+  for (let i = 0; i < 3 && pool.length > 0; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    picks.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  return picks;
+}
+
+function showLevelUp() {
+  state = 'levelup';
+  const choices = pickUpgrades();
+  const container = document.getElementById('upgrade-choices');
+  container.innerHTML = '';
+  choices.forEach(up => {
+    const card = document.createElement('div');
+    card.className = 'upgrade-card';
+    card.innerHTML = `
+      <div class="icon">${up.icon}</div>
+      <div class="name">${up.name}</div>
+      <div class="desc">${up.desc}</div>
+    `;
+    card.onclick = () => {
+      up.apply(player);
+      document.getElementById('levelup').classList.add('hidden');
+      state = 'playing';
+      lastFrame = performance.now();
+    };
+    container.appendChild(card);
+  });
+  document.getElementById('levelup').classList.remove('hidden');
+}
+
+// Boss bonus: pick 3 upgrades from the full pool of 9
+function showBossUpgrade() {
+  state = 'levelup';
+  const overlay = document.getElementById('levelup');
+  const h1 = overlay.querySelector('h1');
+  const h2 = overlay.querySelector('h2');
+  const origH1 = h1.textContent;
+  const origH2 = h2.textContent;
+  h1.textContent = 'BOSS REWARD';
+
+  const remaining = [...UPGRADES];
+  let picksLeft = 3;
+  const container = document.getElementById('upgrade-choices');
+
+  const render = () => {
+    h2.textContent = `pick ${picksLeft} upgrade${picksLeft === 1 ? '' : 's'}`;
+    container.innerHTML = '';
+    remaining.forEach(up => {
+      const card = document.createElement('div');
+      card.className = 'upgrade-card';
+      card.innerHTML = `
+        <div class="icon">${up.icon}</div>
+        <div class="name">${up.name}</div>
+        <div class="desc">${up.desc}</div>
+      `;
+      card.onclick = () => {
+        up.apply(player);
+        floatText(player.x, player.y - 40, `${up.name}!`, '#00f0ff');
+        const idx = remaining.indexOf(up);
+        if (idx >= 0) remaining.splice(idx, 1);
+        picksLeft--;
+        if (picksLeft <= 0) {
+          h1.textContent = origH1;
+          h2.textContent = origH2;
+          overlay.classList.add('hidden');
+          state = 'playing';
+          lastFrame = performance.now();
+        } else {
+          render();
+        }
+      };
+      container.appendChild(card);
+    });
+  };
+
+  render();
+  overlay.classList.remove('hidden');
+}
+
+// =============================================================
+// LEGENDARY UPGRADES (boss rewards)
+// =============================================================
+const LEGENDARIES = [
+  {
+    id: 'chain',
+    icon: '⚡',
+    name: 'CHAIN LIGHTNING',
+    desc: 'Projectiles bounce to up to 3 nearby enemies. Each bounce deals 70% of the previous damage.',
+  },
+  {
+    id: 'flame',
+    icon: '🔥',
+    name: 'FLAME SHOT',
+    desc: 'Projectiles ignite enemies. Burning enemies take damage over 3 seconds.',
+  },
+  {
+    id: 'ice',
+    icon: '❄️',
+    name: 'ICE SHOT',
+    desc: 'Projectiles slow enemies by 60% for 2 seconds.',
+  },
+];
+
+function showLegendaryUpgrade() {
+  state = 'levelup'; // reuse paused-loop behavior
+  const container = document.getElementById('legendary-choices');
+  container.innerHTML = '';
+  LEGENDARIES.forEach(leg => {
+    const owned = player.legendaries[leg.id];
+    const card = document.createElement('div');
+    card.className = 'legendary-card' + (owned ? ' owned' : '');
+    card.innerHTML = `
+      <span class="owned-tag">OWNED</span>
+      <div class="icon">${leg.icon}</div>
+      <div class="name">${leg.name}</div>
+      <div class="desc">${leg.desc}</div>
+    `;
+    if (!owned) {
+      card.onclick = () => {
+        player.legendaries[leg.id] = true;
+        document.getElementById('legendary').classList.add('hidden');
+        refreshLegendariesPanel();
+        floatText(player.x, player.y - 40, `${leg.name}!`, '#ffd60a');
+        state = 'playing';
+        lastFrame = performance.now();
+      };
+    }
+    container.appendChild(card);
+  });
+  document.getElementById('legendary').classList.remove('hidden');
+}
+
+function refreshLegendariesPanel() {
+  const list = document.getElementById('legendaries-list');
+  if (!player) return;
+  const owned = LEGENDARIES.filter(l => player.legendaries[l.id]);
+  if (owned.length === 0) {
+    list.innerHTML = '<div class="leg-empty">none yet — defeat a boss</div>';
+    return;
+  }
+  list.innerHTML = owned.map(l => `
+    <div class="leg-item">
+      <div class="leg-icon">${l.icon}</div>
+      <div class="leg-name">${l.name}</div>
+    </div>
+  `).join('');
+}
+
+// =============================================================
+// UPDATE
+// =============================================================
+function update(dt) {
+  timeMs += dt;
+  waveTimer += dt;
+  if (waveTimer >= WAVE_DURATION && !bossActive && bossWarning <= 0) {
+    waveTimer = 0;
+    wave++;
+    floatText(player.x, player.y - 30, `WAVE ${wave}!`, '#ffd60a');
+    // Trigger boss warning at every 10th wave
+    if (wave % 10 === 0 && wave !== lastBossWave) {
+      lastBossWave = wave;
+      bossWarning = 2500; // 2.5s warning
+      bossSpawnPending = true;
+    }
+  }
+  // Pause wave timer during boss warning/fight
+  if (bossActive || bossWarning > 0) {
+    waveTimer = 0;
+  }
+
+  // Boss warning countdown → spawn
+  if (bossWarning > 0) {
+    bossWarning -= dt;
+    if (bossWarning <= 0) {
+      bossWarning = 0;
+      spawnBoss();
+    }
+  }
+
+  // --- Movement ---
+  let mx = 0, my = 0;
+  if (keys['w'] || keys['arrowup']) my -= 1;
+  if (keys['s'] || keys['arrowdown']) my += 1;
+  if (keys['a'] || keys['arrowleft']) mx -= 1;
+  if (keys['d'] || keys['arrowright']) mx += 1;
+  if (mx || my) {
+    const len = Math.hypot(mx, my);
+    mx /= len; my /= len;
+    player.x += mx * player.speed;
+    player.y += my * player.speed;
+  }
+  player.x = Math.max(player.r, Math.min(W - player.r, player.x));
+  player.y = Math.max(player.r, Math.min(H - player.r, player.y));
+
+  if (player.hurtFlash > 0) player.hurtFlash -= dt;
+
+  // --- Spawning ---
+  updateSpawning(dt);
+
+  // --- Weapon ---
+  player.fireCooldown -= dt;
+  if (player.fireCooldown <= 0) {
+    fireWeapon();
+    player.fireCooldown = player.fireRate;
+  }
+
+  // --- Projectiles ---
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const p = projectiles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= dt;
+    if (p.life <= 0 || p.x < -50 || p.x > W + 50 || p.y < -50 || p.y > H + 50) {
+      projectiles.splice(i, 1);
+      continue;
+    }
+    // Check enemy collisions
+    for (const e of enemies) {
+      if (p.hit.has(e)) continue;
+      const dx = e.x - p.x, dy = e.y - p.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < e.r + p.r) {
+        e.hp -= p.damage;
+        e.hitFlash = 80;
+        // Knockback
+        const kbForce = 4;
+        e.knockbackX = (dx / (dist || 1)) * kbForce;
+        e.knockbackY = (dy / (dist || 1)) * kbForce;
+        burst(p.x, p.y, '#ffffff', 4, 2);
+        p.hit.add(e);
+
+        // === LEGENDARY EFFECTS ===
+        // Flame Shot: ignite the enemy (burn DoT)
+        if (player.legendaries.flame) {
+          e.burnTime = 3000;                     // 3 seconds
+          e.burnDamagePerSec = player.projDamage * 0.5;
+          e.burnTickAccum = 0;
+        }
+        // Ice Shot: slow the enemy
+        if (player.legendaries.ice) {
+          e.slowTime = 2000;                     // 2 seconds
+          e.slowFactor = 0.4;                    // 60% slower
+        }
+        // Chain Lightning: bounce to next enemies
+        if (player.legendaries.chain && p.chainsLeft > 0) {
+          triggerChainLightning(e, p.damage * 0.7, p.chainsLeft, p.hit);
+        }
+
+        if (p.pierce <= 0) {
+          projectiles.splice(i, 1);
+          break;
+        } else {
+          p.pierce--;
+        }
+      }
+    }
+  }
+
+  // --- Enemies ---
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    if (e.hitFlash > 0) e.hitFlash -= dt;
+
+    // --- Status effects ---
+    // Burn (DoT — Flame Shot)
+    if (e.burnTime > 0) {
+      e.burnTime -= dt;
+      e.burnTickAccum += dt;
+      // Tick every 250ms
+      while (e.burnTickAccum >= 250) {
+        e.burnTickAccum -= 250;
+        const tickDmg = e.burnDamagePerSec * 0.25;
+        e.hp -= tickDmg;
+      }
+      if (e.burnTime <= 0) {
+        e.burnTime = 0;
+        e.burnDamagePerSec = 0;
+      }
+    }
+    // Slow (Ice Shot)
+    if (e.slowTime > 0) {
+      e.slowTime -= dt;
+      if (e.slowTime <= 0) {
+        e.slowTime = 0;
+        e.slowFactor = 1;
+      }
+    }
+
+    // Apply knockback decay
+    e.x += e.knockbackX;
+    e.y += e.knockbackY;
+    e.knockbackX *= 0.7;
+    e.knockbackY *= 0.7;
+
+    // Move toward player (with slow factor applied)
+    const dx = player.x - e.x, dy = player.y - e.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const effectiveSpeed = e.speed * (e.slowTime > 0 ? e.slowFactor : 1);
+    e.x += (dx / d) * effectiveSpeed;
+    e.y += (dy / d) * effectiveSpeed;
+
+    // Death
+    if (e.hp <= 0) {
+      if (e.isBoss) {
+        // Boss death: huge particles, guaranteed pack, lots of XP
+        burst(e.x, e.y, e.color, 40, 6);
+        burst(e.x, e.y, '#ffd60a', 30, 5);
+        for (let g = 0; g < 8; g++) dropGem(e.x + (Math.random()-0.5)*40, e.y + (Math.random()-0.5)*40, 5);
+        dropHealthPack(e.x, e.y);
+        floatText(e.x, e.y - 30, 'BOSS DEFEATED!', '#ffd60a');
+        bossActive = false;
+        bossesDefeated++;
+        // Queue boss-bonus pick-3-from-9 upgrade screen
+        pendingBossUpgradeScreen = true;
+        // Queue legendary upgrade screen if any are still unlocked
+        if (!player.legendaries.chain || !player.legendaries.flame || !player.legendaries.ice) {
+          pendingLegendaryScreen = true;
+        }
+      } else {
+        burst(e.x, e.y, e.color, 12, 4);
+        dropGem(e.x, e.y, e.type === 'tank' ? 3 : 1);
+        // 4% chance to drop a health pack
+        if (Math.random() < 0.04) dropHealthPack(e.x, e.y);
+        // 0.7% chance to drop a magnet
+        if (Math.random() < 0.007) dropMagnet(e.x, e.y);
+      }
+      enemies.splice(i, 1);
+      kills++;
+      continue;
+    }
+
+    // Touch player
+    const pdx = player.x - e.x, pdy = player.y - e.y;
+    if (Math.hypot(pdx, pdy) < e.r + player.r) {
+      if (player.hurtFlash <= 0) {
+        player.hp -= e.dmg;
+        player.hurtFlash = 600;
+        burst(player.x, player.y, '#ff3b3b', 10, 3);
+        floatText(player.x, player.y - 20, `-${e.dmg}`, '#ff3b3b');
+        if (player.hp <= 0) {
+          gameOver();
+          return;
+        }
+      }
+    }
+
+    // Avoid stacking (gentle separation)
+    for (let j = i - 1; j >= 0; j--) {
+      const e2 = enemies[j];
+      const ddx = e.x - e2.x, ddy = e.y - e2.y;
+      const dd = Math.hypot(ddx, ddy);
+      const minD = e.r + e2.r;
+      if (dd < minD && dd > 0) {
+        const push = (minD - dd) / 2;
+        e.x += (ddx / dd) * push * 0.4;
+        e.y += (ddy / dd) * push * 0.4;
+        e2.x -= (ddx / dd) * push * 0.4;
+        e2.y -= (ddy / dd) * push * 0.4;
+      }
+    }
+  }
+
+  // --- Gems ---
+  for (let i = gems.length - 1; i >= 0; i--) {
+    const g = gems[i];
+    g.life -= dt;
+    if (g.life <= 0) { gems.splice(i, 1); continue; }
+    const dx = player.x - g.x, dy = player.y - g.y;
+    const d = Math.hypot(dx, dy);
+    if (g.forceVacuum || d < player.pickupRadius) {
+      // Vacuumed gems use the higher attractSpeed already set on them; normal gems ramp up to 8
+      if (!g.forceVacuum) {
+        g.attractSpeed = Math.min(g.attractSpeed + 0.4, 8);
+      }
+      g.x += (dx / (d || 1)) * g.attractSpeed;
+      g.y += (dy / (d || 1)) * g.attractSpeed;
+    }
+    if (d < player.r + g.r) {
+      player.xp += bossesDefeated >= 1 ? g.value * 2 : g.value;
+      gems.splice(i, 1);
+      while (player.xp >= player.xpToNext) {
+        player.xp -= player.xpToNext;
+        player.level++;
+        player.xpToNext = Math.floor(player.xpToNext * 1.3 + 2);
+        showLevelUp();
+        return; // pause for level-up
+      }
+    }
+  }
+
+  // --- Health Packs (persistent — no despawn) ---
+  for (let i = healthPacks.length - 1; i >= 0; i--) {
+    const hp = healthPacks[i];
+    const dx = player.x - hp.x, dy = player.y - hp.y;
+    const d = Math.hypot(dx, dy);
+    if (d < player.pickupRadius) {
+      hp.attractSpeed = Math.min(hp.attractSpeed + 0.4, 8);
+      hp.x += (dx / (d || 1)) * hp.attractSpeed;
+      hp.y += (dy / (d || 1)) * hp.attractSpeed;
+    }
+    if (d < player.r + hp.r) {
+      const before = player.hp;
+      player.hp = Math.min(player.maxHp, player.hp + hp.value);
+      const healed = Math.round(player.hp - before);
+      floatText(player.x, player.y - 20, `+${healed} HP`, '#7cffb2');
+      burst(player.x, player.y, '#7cffb2', 12, 2);
+      healthPacks.splice(i, 1);
+    }
+  }
+
+  // --- Magnets (persistent — no despawn) ---
+  for (let i = magnets.length - 1; i >= 0; i--) {
+    const mg = magnets[i];
+    const dx = player.x - mg.x, dy = player.y - mg.y;
+    const d = Math.hypot(dx, dy);
+    if (d < player.pickupRadius) {
+      mg.attractSpeed = Math.min(mg.attractSpeed + 0.4, 8);
+      mg.x += (dx / (d || 1)) * mg.attractSpeed;
+      mg.y += (dy / (d || 1)) * mg.attractSpeed;
+    }
+    if (d < player.r + mg.r) {
+      // VACUUM EFFECT — force every gem on the field to high-speed attraction
+      for (const g of gems) {
+        g.attractSpeed = 14;       // way above the normal cap of 8
+        g.forceVacuum = true;      // flag so the gem loop ignores the radius check
+      }
+      // Visual feedback
+      floatText(player.x, player.y - 24, 'VACUUM!', '#c084fc');
+      burst(player.x, player.y, '#c084fc', 24, 5);
+      burst(player.x, player.y, '#ffffff', 12, 3);
+      // Expanding shockwave ring
+      particles.push({
+        x: player.x, y: player.y,
+        vx: 0, vy: 0,
+        life: 600, maxLife: 600,
+        color: '#c084fc',
+        r: 4,
+        isRing: true,
+      });
+      magnets.splice(i, 1);
+    }
+  }
+
+  // --- Particles ---
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= 0.94; p.vy *= 0.94;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  // --- Lightning arcs (chain lightning visual) ---
+  for (let i = lightningArcs.length - 1; i >= 0; i--) {
+    lightningArcs[i].life -= dt;
+    if (lightningArcs[i].life <= 0) lightningArcs.splice(i, 1);
+  }
+  for (let i = floatingTexts.length - 1; i >= 0; i--) {
+    const t = floatingTexts[i];
+    t.y += t.vy;
+    t.life -= dt;
+    if (t.life <= 0) floatingTexts.splice(i, 1);
+  }
+
+  // --- Pending screens (after boss death) ---
+  // Boss-bonus screen first, then legendary on a later frame
+  if (pendingBossUpgradeScreen) {
+    pendingBossUpgradeScreen = false;
+    showBossUpgrade();
+  } else if (pendingLegendaryScreen) {
+    pendingLegendaryScreen = false;
+    showLegendaryUpgrade();
+  }
+}
+
+// =============================================================
+// RENDER
+// =============================================================
+function drawGrid() {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 45, 117, 0.07)';
+  ctx.lineWidth = 1;
+  const grid = 40;
+  for (let x = 0; x < W; x += grid) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += grid) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPlayer() {
+  ctx.save();
+  // Pickup radius (faint)
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.pickupRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(124, 255, 178, 0.04)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(124, 255, 178, 0.12)';
+  ctx.setLineDash([4, 6]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Glow
+  const glow = ctx.createRadialGradient(player.x, player.y, 4, player.x, player.y, 30);
+  glow.addColorStop(0, 'rgba(0, 240, 255, 0.5)');
+  glow.addColorStop(1, 'rgba(0, 240, 255, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(player.x - 30, player.y - 30, 60, 60);
+
+  // Body
+  const flash = player.hurtFlash > 0 && (Math.floor(player.hurtFlash / 60) % 2 === 0);
+  ctx.fillStyle = flash ? '#ffffff' : '#00f0ff';
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Inner core
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawEnemy(e) {
+  ctx.save();
+  // Glow (extra intense for boss)
+  const glowR = e.isBoss ? e.r * 2.6 : e.r * 2.2;
+  const glow = ctx.createRadialGradient(e.x, e.y, 2, e.x, e.y, glowR);
+  glow.addColorStop(0, e.color + (e.isBoss ? 'cc' : '88'));
+  glow.addColorStop(1, e.color + '00');
+  ctx.fillStyle = glow;
+  ctx.fillRect(e.x - glowR, e.y - glowR, glowR * 2, glowR * 2);
+
+  // Body — apply ice tint if slowed
+  let bodyColor = e.color;
+  if (e.slowTime > 0) {
+    // Blend toward icy blue
+    bodyColor = '#7dd3fc';
+  }
+  ctx.fillStyle = e.hitFlash > 0 ? '#fff' : bodyColor;
+  if (e.isBoss) {
+    // Boss: rotating 8-point star/sun with pulsing aura
+    const rot = timeMs / 800;
+    const pulse = 1 + Math.sin(timeMs / 300) * 0.05;
+    ctx.translate(e.x, e.y);
+    ctx.rotate(rot);
+    // Outer spikes
+    ctx.beginPath();
+    const points = 8;
+    for (let i = 0; i < points * 2; i++) {
+      const ang = (i / (points * 2)) * Math.PI * 2;
+      const radius = (i % 2 === 0 ? e.r * 1.15 : e.r * 0.7) * pulse;
+      const px = Math.cos(ang) * radius;
+      const py = Math.sin(ang) * radius;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // Inner core
+    ctx.fillStyle = e.hitFlash > 0 ? '#fff' : '#ffd60a';
+    ctx.beginPath();
+    ctx.arc(0, 0, e.r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Border ring
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, e.r * 0.85, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (e.type === 'tank') {
+    // diamond
+    ctx.beginPath();
+    ctx.moveTo(e.x, e.y - e.r);
+    ctx.lineTo(e.x + e.r, e.y);
+    ctx.lineTo(e.x, e.y + e.r);
+    ctx.lineTo(e.x - e.r, e.y);
+    ctx.closePath();
+    ctx.fill();
+  } else if (e.type === 'fast') {
+    // triangle
+    const ang = Math.atan2(player.y - e.y, player.x - e.x);
+    ctx.translate(e.x, e.y);
+    ctx.rotate(ang);
+    ctx.beginPath();
+    ctx.moveTo(e.r, 0);
+    ctx.lineTo(-e.r * 0.7, e.r * 0.8);
+    ctx.lineTo(-e.r * 0.7, -e.r * 0.8);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Burn flame overlay (Flame Shot DoT)
+  if (e.burnTime > 0) {
+    ctx.save();
+    const flicker = Math.sin(timeMs / 80 + e.x) * 0.5 + 0.5;
+    // Three small flame puffs above the enemy
+    for (let f = 0; f < 3; f++) {
+      const fx = e.x + Math.sin(timeMs / 200 + f * 1.7) * (e.r * 0.6);
+      const fy = e.y - e.r * 0.4 + Math.cos(timeMs / 150 + f) * 3;
+      const fr = e.r * 0.35 * (0.7 + flicker * 0.4);
+      const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr * 1.6);
+      fg.addColorStop(0, 'rgba(253, 224, 71, 0.85)');
+      fg.addColorStop(0.5, 'rgba(251, 146, 60, 0.6)');
+      fg.addColorStop(1, 'rgba(239, 68, 68, 0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Ice frost ring (Ice Shot slow)
+  if (e.slowTime > 0) {
+    ctx.save();
+    const fade = Math.min(1, e.slowTime / 500); // fade out in last 500ms
+    ctx.strokeStyle = `rgba(125, 211, 252, ${0.7 * fade})`;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#7dd3fc';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.r + 4 + Math.sin(timeMs / 300) * 1.5, 0, Math.PI * 2);
+    ctx.stroke();
+    // Tiny crystal particles
+    ctx.fillStyle = `rgba(186, 230, 253, ${0.6 * fade})`;
+    for (let s = 0; s < 4; s++) {
+      const ang = (timeMs / 600) + s * (Math.PI / 2);
+      const sx = e.x + Math.cos(ang) * (e.r + 5);
+      const sy = e.y + Math.sin(ang) * (e.r + 5);
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // HP bar above (if damaged) — bigger for boss, persistent
+  if (e.hp < e.maxHp || e.isBoss) {
+    const w = e.isBoss ? e.r * 3 : e.r * 2;
+    const h = e.isBoss ? 6 : 3;
+    const x = e.x - w / 2;
+    const y = e.y - e.r - (e.isBoss ? 14 : 8);
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = e.isBoss ? '#ff3b5c' : '#7cffb2';
+    ctx.fillRect(x, y, w * (e.hp / e.maxHp), h);
+    if (e.isBoss) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+    }
+  }
+}
+
+function drawProjectile(p) {
+  ctx.save();
+  // Determine projectile color based on player's legendaries
+  // Priority: ice > flame > chain > default
+  let coreColor = '#ffd60a';   // default yellow
+  let glowColor = 'rgba(255, 214, 10, 0.8)';
+  let glowEdge  = 'rgba(255, 214, 10, 0)';
+  if (player && player.legendaries) {
+    if (player.legendaries.ice) {
+      coreColor = '#7dd3fc';
+      glowColor = 'rgba(125, 211, 252, 0.85)';
+      glowEdge  = 'rgba(125, 211, 252, 0)';
+    } else if (player.legendaries.flame) {
+      coreColor = '#fb923c';
+      glowColor = 'rgba(251, 146, 60, 0.85)';
+      glowEdge  = 'rgba(251, 146, 60, 0)';
+    } else if (player.legendaries.chain) {
+      coreColor = '#fde047';
+      glowColor = 'rgba(253, 224, 71, 0.9)';
+      glowEdge  = 'rgba(253, 224, 71, 0)';
+    }
+  }
+
+  // Trail glow
+  const glowR = (player && player.legendaries && player.legendaries.flame) ? 16 : 12;
+  const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+  glow.addColorStop(0, glowColor);
+  glow.addColorStop(1, glowEdge);
+  ctx.fillStyle = glow;
+  ctx.fillRect(p.x - glowR, p.y - glowR, glowR * 2, glowR * 2);
+
+  // Flame trail particles (small)
+  if (player && player.legendaries && player.legendaries.flame) {
+    ctx.fillStyle = `rgba(251, 146, 60, ${0.4 + Math.random() * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(p.x - p.vx * 0.4, p.y - p.vy * 0.4, p.r * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = coreColor;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.r * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawLightningArcs() {
+  for (const arc of lightningArcs) {
+    const alpha = Math.max(0, arc.life / arc.maxLife);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = '#fde047';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#fde047';
+    ctx.shadowBlur = 14;
+    // Jagged lightning effect — draw 3 segments with random offsets
+    ctx.beginPath();
+    ctx.moveTo(arc.x1, arc.y1);
+    const midX = (arc.x1 + arc.x2) / 2 + (Math.random() - 0.5) * 30;
+    const midY = (arc.y1 + arc.y2) / 2 + (Math.random() - 0.5) * 30;
+    const q1X  = (arc.x1 + midX) / 2 + (Math.random() - 0.5) * 16;
+    const q1Y  = (arc.y1 + midY) / 2 + (Math.random() - 0.5) * 16;
+    const q2X  = (midX + arc.x2) / 2 + (Math.random() - 0.5) * 16;
+    const q2Y  = (midY + arc.y2) / 2 + (Math.random() - 0.5) * 16;
+    ctx.lineTo(q1X, q1Y);
+    ctx.lineTo(midX, midY);
+    ctx.lineTo(q2X, q2Y);
+    ctx.lineTo(arc.x2, arc.y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawGem(g) {
+  ctx.save();
+  const pulse = 1 + Math.sin(timeMs / 200) * 0.15;
+  // glow
+  const glow = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, 14);
+  glow.addColorStop(0, 'rgba(124, 255, 178, 0.6)');
+  glow.addColorStop(1, 'rgba(124, 255, 178, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(g.x - 14, g.y - 14, 28, 28);
+
+  ctx.fillStyle = '#7cffb2';
+  ctx.translate(g.x, g.y);
+  ctx.rotate(Math.PI / 4);
+  ctx.fillRect(-g.r * pulse, -g.r * pulse, g.r * 2 * pulse, g.r * 2 * pulse);
+  ctx.restore();
+}
+
+function drawHealthPack(hp) {
+  ctx.save();
+  const pulse = 1 + Math.sin(timeMs / 180) * 0.12;
+  const r = hp.r * pulse;
+  // glow
+  const glow = ctx.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, 22);
+  glow.addColorStop(0, 'rgba(255, 80, 110, 0.7)');
+  glow.addColorStop(1, 'rgba(255, 80, 110, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(hp.x - 22, hp.y - 22, 44, 44);
+
+  // White rounded square base
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(hp.x - r, hp.y - r, r * 2, r * 2, 3);
+  else ctx.rect(hp.x - r, hp.y - r, r * 2, r * 2);
+  ctx.fill();
+
+  // Red cross
+  ctx.fillStyle = '#ff3b5c';
+  const t = r * 0.32; // cross thickness half
+  const a = r * 0.7;  // cross arm length
+  ctx.fillRect(hp.x - t, hp.y - a, t * 2, a * 2);
+  ctx.fillRect(hp.x - a, hp.y - t, a * 2, t * 2);
+  ctx.restore();
+}
+
+function drawMagnet(mg) {
+  ctx.save();
+  const pulse = 1 + Math.sin(timeMs / 200) * 0.12;
+  const r = mg.r * pulse;
+  // Purple glow
+  const glow = ctx.createRadialGradient(mg.x, mg.y, 0, mg.x, mg.y, 26);
+  glow.addColorStop(0, 'rgba(192, 132, 252, 0.7)');
+  glow.addColorStop(1, 'rgba(192, 132, 252, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(mg.x - 26, mg.y - 26, 52, 52);
+
+  // Horseshoe magnet — draw as a U shape with two prongs
+  // Center the shape on (mg.x, mg.y)
+  ctx.translate(mg.x, mg.y);
+  // Slow rotation for character
+  ctx.rotate(Math.sin(timeMs / 600) * 0.15);
+
+  const w = r * 1.6;       // overall width
+  const h = r * 1.5;       // overall height
+  const thick = r * 0.45;  // arm thickness
+
+  // Outer purple body (the U)
+  ctx.fillStyle = '#a855f7';
+  ctx.beginPath();
+  ctx.moveTo(-w/2, -h/2);
+  ctx.lineTo(-w/2,  h/2);
+  ctx.lineTo(-w/2 + thick,  h/2);
+  ctx.lineTo(-w/2 + thick,  h/2 - (h - thick));
+  ctx.lineTo( w/2 - thick,  h/2 - (h - thick));
+  ctx.lineTo( w/2 - thick,  h/2);
+  ctx.lineTo( w/2,  h/2);
+  ctx.lineTo( w/2, -h/2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Red tips on the bottom of each prong (classic magnet look)
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(-w/2,             h/2 - thick * 0.6, thick, thick * 0.6);
+  ctx.fillRect( w/2 - thick,     h/2 - thick * 0.6, thick, thick * 0.6);
+
+  // Highlight stripe across the curved top
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.fillRect(-w/2 + thick * 0.2, -h/2 + thick * 0.2, w - thick * 0.4, thick * 0.25);
+  ctx.restore();
+}
+
+function drawBossWarning() {
+  if (bossWarning <= 0) return;
+  ctx.save();
+  // Pulsing red overlay
+  const pulse = (Math.sin(timeMs / 120) + 1) / 2; // 0..1
+  ctx.fillStyle = `rgba(168, 85, 247, ${0.08 + pulse * 0.08})`;
+  ctx.fillRect(0, 0, W, H);
+
+  // Big text
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 64px "Bungee", cursive';
+  ctx.fillStyle = `rgba(168, 85, 247, ${0.7 + pulse * 0.3})`;
+  ctx.shadowColor = '#a855f7';
+  ctx.shadowBlur = 30;
+  ctx.fillText('⚠ BOSS INCOMING ⚠', W/2, H/2 - 20);
+
+  ctx.font = 'bold 22px "Bungee", cursive';
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowBlur = 12;
+  const seconds = Math.ceil(bossWarning / 1000);
+  ctx.fillText(`PREPARE — ${seconds}`, W/2, H/2 + 30);
+  ctx.restore();
+}
+
+function drawParticle(p) {
+  const alpha = Math.max(0, p.life / p.maxLife);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if (p.isRing) {
+    // Magnet shockwave: expanding hollow ring
+    const progress = 1 - (p.life / p.maxLife); // 0..1
+    const radius = 20 + progress * 200;
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 4 * (1 - progress) + 1;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawFloatText(t) {
+  const alpha = Math.max(0, t.life / t.maxLife);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = t.color;
+  ctx.font = 'bold 14px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(t.text, t.x, t.y);
+  ctx.restore();
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawGrid();
+
+  // gems, health packs, magnets beneath everything
+  for (const g of gems) drawGem(g);
+  for (const hp of healthPacks) drawHealthPack(hp);
+  for (const mg of magnets) drawMagnet(mg);
+  // enemies
+  for (const e of enemies) drawEnemy(e);
+  // projectiles
+  for (const p of projectiles) drawProjectile(p);
+  // lightning arcs (chain lightning visual, drawn on top of projectiles)
+  drawLightningArcs();
+  // player
+  drawPlayer();
+  // particles
+  for (const p of particles) drawParticle(p);
+  // floating text
+  for (const t of floatingTexts) drawFloatText(t);
+  // boss warning overlay (drawn last, on top of everything)
+  drawBossWarning();
+}
+
+// =============================================================
+// HUD update
+// =============================================================
+function updateHUD() {
+  document.getElementById('wave-val').textContent = wave;
+  const totalSec = Math.floor(timeMs / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  const timeStr = `${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('time-val').textContent = timeStr;
+  document.getElementById('kills-val').textContent = kills;
+  const hpPct = Math.max(0, player.hp / player.maxHp * 100);
+  document.getElementById('hp-fill').style.width = hpPct + '%';
+  document.getElementById('hp-val').textContent = `${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp}`;
+  document.getElementById('xp-fill').style.width = (player.xp / player.xpToNext * 100) + '%';
+  document.getElementById('xp-val').textContent = `LV ${player.level}  ·  ${player.xp} / ${player.xpToNext}`;
+  document.querySelector('#bars .bar-wrap:nth-child(2) .bar-label').textContent = `LV ${player.level}`;
+
+  // Live stats panel
+  document.getElementById('sp-hp').textContent = `${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp}`;
+  document.getElementById('sp-level').textContent = player.level;
+  document.getElementById('sp-xp').textContent = `${player.xp} / ${player.xpToNext}`;
+  document.getElementById('sp-move').textContent = player.speed.toFixed(2);
+  document.getElementById('sp-magnet').textContent = Math.round(player.pickupRadius);
+  document.getElementById('sp-dmg').textContent = Math.round(player.projDamage);
+  document.getElementById('sp-rate').textContent = (1000 / player.fireRate).toFixed(2) + '/s';
+  document.getElementById('sp-pspd').textContent = player.projSpeed.toFixed(1);
+  document.getElementById('sp-pcnt').textContent = player.projCount;
+  document.getElementById('sp-pierce').textContent = player.projPierce;
+  document.getElementById('sp-wave').textContent = wave;
+  document.getElementById('sp-enemies').textContent = enemies.length;
+  document.getElementById('sp-kills').textContent = kills;
+  document.getElementById('sp-time').textContent = timeStr;
+}
+
+// =============================================================
+// LOOP
+// =============================================================
+function loop(now) {
+  if (state === 'playing') {
+    frameDelta = Math.min(now - lastFrame, 50); // cap delta to avoid spiral
+    lastFrame = now;
+    update(frameDelta);
+    render();
+    updateHUD();
+  } else if (state === 'levelup' || state === 'paused') {
+    render();
+    updateHUD();
+    lastFrame = now;
+  }
+  requestAnimationFrame(loop);
+}
+
+// =============================================================
+// FLOW
+// =============================================================
+// =============================================================
+// SCREEN VISIBILITY HELPERS
+// =============================================================
+// `runInProgress` is true when there's an active or paused run that can be resumed.
+// Becomes false on game over (run ended) or after a fresh startGame.
+let runInProgress = false;
+
+function hideAllOverlays() {
+  ['hub','levelup','game-over','pause'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+}
+function setIngameHUD(visible) {
+  document.querySelectorAll('.ingame-only').forEach(el => {
+    el.classList.toggle('hidden', !visible);
+  });
+}
+
+// Switch which hub tab is active
+function setHubTab(tabName) {
+  document.querySelectorAll('.hub-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.hub-page').forEach(p => {
+    p.classList.toggle('active', p.id === 'page-' + tabName);
+  });
+}
+
+function showHub(tab) {
+  state = 'hub';
+  hideAllOverlays();
+  setIngameHUD(false);
+  recordsDropdown.classList.remove('open');
+  recordsBtn.classList.remove('open');
+  refreshHubUI();
+  if (tab) setHubTab(tab);
+  document.getElementById('hub').classList.remove('hidden');
+}
+
+function refreshHubUI() {
+  const rec = loadRecords();
+  document.getElementById('hub-gems').textContent = (rec.gems || 0).toLocaleString();
+  // Update the home action area for start vs resume
+  const homeAction = document.getElementById('home-action');
+  const playBtn = document.getElementById('hub-play-btn');
+  if (runInProgress) {
+    homeAction.classList.add('has-run');
+    playBtn.textContent = '▶ RESUME';
+  } else {
+    homeAction.classList.remove('has-run');
+    playBtn.textContent = '▶ START';
+  }
+}
+
+// =============================================================
+// GEM REWARD CALCULATION
+// =============================================================
+function gemsForWave(w) {
+  // Tiered: 1 (1-4), 2 (5-9), 4 (10-14), 7 (15-19), 10 (20+)
+  if (w >= 20) return 10;
+  if (w >= 15) return 7;
+  if (w >= 10) return 4;
+  if (w >= 5)  return 2;
+  return 1;
+}
+function calculateGemsEarned(waveReached, bossesKilled) {
+  const waveGems = gemsForWave(waveReached);
+  const bossGems = bossesKilled * 5;
+  return { waveGems, bossGems, total: waveGems + bossGems };
+}
+
+// =============================================================
+// FLOW
+// =============================================================
+function startGame() {
+  // If there's a paused run, this button means "resume" instead of starting fresh
+  if (runInProgress && state === 'hub') {
+    resumeRun();
+    return;
+  }
+  player = makePlayer();
+  enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
+  timeMs = 0; kills = 0; wave = 1; waveTimer = 0; spawnTimer = 0;
+  bossActive = false; bossWarning = 0; bossSpawnPending = false; lastBossWave = 0; bossesDefeated = 0;
+  pendingLegendaryScreen = false;
+  pendingBossUpgradeScreen = false;
+  runInProgress = true;
+  hideAllOverlays();
+  setIngameHUD(true);
+  refreshLegendariesPanel();
+  state = 'playing';
+  lastFrame = performance.now();
+}
+
+// Suspend a running game and return to hub. The run state stays in memory.
+function pauseToHub() {
+  if (!runInProgress) { showHub('home'); return; }
+  // Make sure we're in 'paused' (or freshly converted) so the loop doesn't tick
+  state = 'hub';
+  hideAllOverlays();
+  setIngameHUD(false);
+  refreshHubUI();
+  setHubTab('home');
+  document.getElementById('hub').classList.remove('hidden');
+}
+
+// Resume a previously suspended run
+function resumeRun() {
+  if (!runInProgress) { startGame(); return; }
+  hideAllOverlays();
+  setIngameHUD(true);
+  state = 'playing';
+  lastFrame = performance.now();
+}
+
+// Abandon the in-progress run from hub
+function abandonRun() {
+  if (!confirm('Abandon current run? Your progress will be lost (but gems already earned in past runs are safe).')) return;
+  runInProgress = false;
+  // Also clear any in-game state so render() doesn't show ghost entities later
+  enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
+  refreshHubUI();
+}
+
+function gameOver() {
+  state = 'gameover';
+  runInProgress = false;
+  const totalSec = Math.floor(timeMs / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  document.getElementById('go-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('go-wave').textContent = wave;
+  document.getElementById('go-kills').textContent = kills;
+  document.getElementById('go-level').textContent = player.level;
+
+  // Calculate gem reward for this run
+  const reward = calculateGemsEarned(wave, bossesDefeated);
+  document.getElementById('go-gems-earned').textContent = reward.total;
+  let breakdown = `Wave ${wave}: +${reward.waveGems}`;
+  if (reward.bossGems > 0) breakdown += `  ·  Bosses (×${bossesDefeated}): +${reward.bossGems}`;
+  document.getElementById('go-gems-breakdown').textContent = breakdown;
+
+  // Update records (now also adds gems)
+  const newBests = updateRecords({
+    wave: wave,
+    timeSec: totalSec,
+    kills: kills,
+    level: player.level,
+    gemsEarned: reward.total,
+  });
+  document.getElementById('go-time-new').style.display  = newBests.time  ? 'block' : 'none';
+  document.getElementById('go-wave-new').style.display  = newBests.wave  ? 'block' : 'none';
+  document.getElementById('go-kills-new').style.display = newBests.kills ? 'block' : 'none';
+  document.getElementById('go-level-new').style.display = newBests.level ? 'block' : 'none';
+  if (newBests.time)  document.getElementById('go-time').classList.add('new-record');  else document.getElementById('go-time').classList.remove('new-record');
+  if (newBests.wave)  document.getElementById('go-wave').classList.add('new-record');  else document.getElementById('go-wave').classList.remove('new-record');
+  if (newBests.kills) document.getElementById('go-kills').classList.add('new-record'); else document.getElementById('go-kills').classList.remove('new-record');
+  if (newBests.level) document.getElementById('go-level').classList.add('new-record'); else document.getElementById('go-level').classList.remove('new-record');
+
+  refreshRecordsUI();
+  setIngameHUD(false);
+  document.getElementById('game-over').classList.remove('hidden');
+}
+
+// =============================================================
+// RECORDS SYSTEM
+// =============================================================
+const RECORDS_KEY = 'survive_swarm_records_v1';
+let storageOK = true;
+let memRecords = null;
+
+function defaultRecords() {
+  return { wave: 0, timeSec: 0, kills: 0, level: 0, runs: 0, totalKills: 0, gems: 0, totalGemsEarned: 0 };
+}
+
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(RECORDS_KEY);
+    storageOK = true;
+    if (!raw) return defaultRecords();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultRecords(), parsed);
+  } catch (e) {
+    storageOK = false;
+    if (memRecords) return memRecords;
+    memRecords = defaultRecords();
+    return memRecords;
+  }
+}
+
+function saveRecords(rec) {
+  try {
+    localStorage.setItem(RECORDS_KEY, JSON.stringify(rec));
+    storageOK = true;
+  } catch (e) {
+    storageOK = false;
+    memRecords = rec;
+  }
+}
+
+function updateRecords({ wave, timeSec, kills, level, gemsEarned = 0 }) {
+  const rec = loadRecords();
+  const newBests = {
+    wave: wave > rec.wave,
+    time: timeSec > rec.timeSec,
+    kills: kills > rec.kills,
+    level: level > rec.level,
+  };
+  rec.wave = Math.max(rec.wave, wave);
+  rec.timeSec = Math.max(rec.timeSec, timeSec);
+  rec.kills = Math.max(rec.kills, kills);
+  rec.level = Math.max(rec.level, level);
+  rec.runs = (rec.runs || 0) + 1;
+  rec.totalKills = (rec.totalKills || 0) + kills;
+  rec.gems = (rec.gems || 0) + gemsEarned;
+  rec.totalGemsEarned = (rec.totalGemsEarned || 0) + gemsEarned;
+  saveRecords(rec);
+  return newBests;
+}
+
+function fmtTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function refreshRecordsUI() {
+  const rec = loadRecords();
+  document.getElementById('rec-wave').textContent = rec.wave || 0;
+  document.getElementById('rec-time').textContent = fmtTime(rec.timeSec || 0);
+  document.getElementById('rec-kills').textContent = rec.kills || 0;
+  document.getElementById('rec-level').textContent = rec.level || 0;
+  document.getElementById('rec-runs').textContent = rec.runs || 0;
+  document.getElementById('rec-totalkills').textContent = rec.totalKills || 0;
+  const warn = document.getElementById('storage-warn');
+  if (!storageOK) {
+    warn.textContent = '⚠ Records can\'t be saved in this preview. Download the file and play locally to save records permanently.';
+  } else {
+    warn.textContent = '';
+  }
+}
+
+// Dropdown toggle (still works during gameplay)
+const recordsBtn = document.getElementById('records-btn');
+const recordsDropdown = document.getElementById('records-dropdown');
+recordsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isOpen = recordsDropdown.classList.toggle('open');
+  recordsBtn.classList.toggle('open', isOpen);
+  if (isOpen) refreshRecordsUI();
+});
+document.addEventListener('click', (e) => {
+  if (!recordsDropdown.contains(e.target) && e.target !== recordsBtn && !recordsBtn.contains(e.target)) {
+    recordsDropdown.classList.remove('open');
+    recordsBtn.classList.remove('open');
+  }
+});
+document.getElementById('reset-records').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (confirm('Reset all records and gems? This cannot be undone.')) {
+    saveRecords(defaultRecords());
+    refreshRecordsUI();
+    refreshHubUI();
+  }
+});
+
+// Initial load
+refreshRecordsUI();
+
+function togglePause() {
+  if (state === 'playing') {
+    state = 'paused';
+    document.getElementById('pause').classList.remove('hidden');
+  } else if (state === 'paused') {
+    document.getElementById('pause').classList.add('hidden');
+    state = 'playing';
+    lastFrame = performance.now();
+  }
+  // 'hub', 'gameover', 'levelup' → P does nothing
+}
+
+// =============================================================
+// EVENT BINDINGS
+// =============================================================
+// Tab switching
+document.querySelectorAll('.hub-tab').forEach(btn => {
+  btn.addEventListener('click', () => setHubTab(btn.dataset.tab));
+});
+
+// Home page actions
+document.getElementById('hub-play-btn').onclick = startGame;
+document.getElementById('hub-abandon-btn').onclick = abandonRun;
+
+// Top-bar records icon (open the existing dropdown)
+document.getElementById('hub-records-btn').onclick = (e) => {
+  e.stopPropagation();
+  recordsDropdown.classList.add('open');
+  refreshRecordsUI();
+};
+
+// Pause overlay buttons
+document.getElementById('pause-resume-btn').onclick = togglePause;
+document.getElementById('pause-home-btn').onclick = pauseToHub;
+
+// Game over buttons
+document.getElementById('restart-btn').onclick = startGame;
+document.getElementById('hub-return-btn').onclick = () => showHub('home');
+
+// Initial state: show the hub on the home tab
+showHub('home');
+
+// kick off render loop (idle until state === playing)
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
