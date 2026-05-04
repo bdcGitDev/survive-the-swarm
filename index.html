@@ -1981,13 +1981,13 @@ function update(dt) {
     if (bh.age > 2400) blackHoles.splice(i, 1);
   }
 
-  // --- Scythe ticks (damage re-applies every 50ms, follows the player) ---
+  // --- Scythe ticks (damage re-applies every 75ms, follows the player) ---
   for (let i = scytheEffects.length - 1; i >= 0; i--) {
     const s = scytheEffects[i];
     s.life -= dt;
     s.tickAccum += dt;
-    while (s.tickAccum >= 50 && s.life > 0) {
-      s.tickAccum -= 50;
+    while (s.tickAccum >= 75 && s.life > 0) {
+      s.tickAccum -= 75;
       applyScytheTick(s.radius);
     }
     if (s.life <= 0) scytheEffects.splice(i, 1);
