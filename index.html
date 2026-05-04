@@ -1542,6 +1542,18 @@ function fireWeapon() {
 // =============================================================
 function castScythe() {
   const radius = 80;
+  // Immediate first damage tick on cast
+  applyScytheTick(radius);
+  // Effect persists for 220ms; the update loop fires more ticks every 50ms
+  // and re-checks against the player's current position each tick.
+  scytheEffects.push({
+    life: 220, maxLife: 220,
+    radius,
+    tickAccum: 0,
+  });
+}
+
+function applyScytheTick(radius) {
   const damage = devMode.unlimitedDmg ? 99999 : player.projDamage;
   let anyHit = false;
   for (const e of enemies) {
@@ -1559,8 +1571,6 @@ function castScythe() {
       anyHit = true;
     }
   }
-  // Visual swing
-  scytheEffects.push({ x: player.x, y: player.y, life: 220, maxLife: 220, radius });
   if (anyHit) burst(player.x, player.y, '#ff2d75', 6, 2);
 }
 
@@ -1971,10 +1981,16 @@ function update(dt) {
     if (bh.age > 2400) blackHoles.splice(i, 1);
   }
 
-  // --- Scythe visual effects (fade out) ---
+  // --- Scythe ticks (damage re-applies every 50ms, follows the player) ---
   for (let i = scytheEffects.length - 1; i >= 0; i--) {
-    scytheEffects[i].life -= dt;
-    if (scytheEffects[i].life <= 0) scytheEffects.splice(i, 1);
+    const s = scytheEffects[i];
+    s.life -= dt;
+    s.tickAccum += dt;
+    while (s.tickAccum >= 50 && s.life > 0) {
+      s.tickAccum -= 50;
+      applyScytheTick(s.radius);
+    }
+    if (s.life <= 0) scytheEffects.splice(i, 1);
   }
 
   // --- Projectiles ---
