@@ -951,6 +951,170 @@
     text-shadow: 0 0 6px rgba(255, 214, 10, 0.4);
   }
 
+  /* Cards panel — sits below the weapons panel on the left side */
+  #cards-panel {
+    position: absolute;
+    top: 460px;
+    left: 24px;
+    width: 200px;
+    background: rgba(10, 6, 18, 0.85);
+    border: 1px solid rgba(132, 240, 255, 0.4);
+    border-radius: 4px;
+    padding: 12px 14px;
+    box-shadow: 0 0 20px rgba(132, 240, 255, 0.18);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    pointer-events: none;
+    color: var(--text);
+  }
+  #cards-panel .cards-title {
+    font-family: 'Bungee', cursive;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    color: #84f0ff;
+    text-shadow: 0 0 8px rgba(132, 240, 255, 0.5);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(132, 240, 255, 0.25);
+    text-align: center;
+  }
+  #cards-panel .card-slot {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 6px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    background: rgba(132, 240, 255, 0.07);
+    transition: opacity 0.12s linear;
+  }
+  #cards-panel .card-slot:last-child { margin-bottom: 0; }
+  #cards-panel .card-slot.empty {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    color: var(--text-dim);
+    font-size: 10px;
+    font-style: italic;
+    justify-content: center;
+    padding: 8px 0;
+  }
+  #cards-panel .card-icon { font-size: 18px; line-height: 1; }
+  #cards-panel .card-info { flex: 1; display: flex; flex-direction: column; }
+  #cards-panel .card-name {
+    font-family: 'Bungee', cursive;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    color: #84f0ff;
+  }
+  #cards-panel .card-cd {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Cards hub tab */
+  .cards-equipped {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .cards-equipped .equipped-slot {
+    width: 170px;
+    min-height: 200px;
+    border: 2px solid rgba(132, 240, 255, 0.5);
+    border-radius: 8px;
+    background: rgba(132, 240, 255, 0.06);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .cards-equipped .equipped-slot:hover { transform: translateY(-3px); border-color: #84f0ff; }
+  .cards-equipped .equipped-slot.empty {
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-dim);
+    justify-content: center;
+    cursor: default;
+  }
+  .cards-equipped .equipped-slot.empty:hover { transform: none; border-color: rgba(255, 255, 255, 0.2); }
+  .cards-equipped .slot-num {
+    font-family: 'Bungee', cursive;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+  }
+  .cards-equipped .slot-icon { font-size: 36px; line-height: 1; }
+  .cards-equipped .slot-name {
+    font-family: 'Bungee', cursive;
+    font-size: 13px;
+    color: #84f0ff;
+  }
+  .cards-equipped .slot-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.35;
+  }
+  .cards-library-title {
+    font-family: 'Bungee', cursive;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin: 0 0 12px 0;
+    text-align: center;
+  }
+  .cards-library {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .cards-library .card-tile {
+    border: 2px solid rgba(132, 240, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(10, 6, 18, 0.8);
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, opacity 0.15s;
+  }
+  .cards-library .card-tile:hover { border-color: #84f0ff; transform: translateY(-2px); }
+  .cards-library .card-tile.equipped {
+    opacity: 0.55;
+    cursor: default;
+    border-color: rgba(132, 240, 255, 0.7);
+  }
+  .cards-library .card-tile.equipped:hover { transform: none; }
+  .cards-library .tile-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px;
+  }
+  .cards-library .tile-icon { font-size: 24px; }
+  .cards-library .tile-name {
+    font-family: 'Bungee', cursive;
+    font-size: 12px;
+    color: #84f0ff;
+  }
+  .cards-library .tile-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+  .cards-library .tile-status {
+    font-size: 10px;
+    font-family: 'Bungee', cursive;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    text-align: right;
+  }
+  .cards-library .card-tile.equipped .tile-status { color: #84f0ff; }
+
   #game-over h1 {
     background: linear-gradient(90deg, var(--danger), var(--accent));
     -webkit-background-clip: text;
@@ -1121,6 +1285,12 @@
     </div>
   </div>
 
+  <!-- Cards panel (left side, below weapons, in-game only) -->
+  <div id="cards-panel" class="ingame-only hidden">
+    <div class="cards-title">🃏 CARDS</div>
+    <div id="cards-list"></div>
+  </div>
+
   <!-- Live stats panel -->
   <div id="stats-panel" class="ingame-only hidden">
     <div class="section">
@@ -1181,6 +1351,7 @@
 
     <div class="hub-tabs">
       <button class="hub-tab active" data-tab="home"><span class="tab-icon">🏠</span> HOME</button>
+      <button class="hub-tab" data-tab="cards"><span class="tab-icon">🃏</span> CARDS</button>
       <button class="hub-tab" data-tab="shop"><span class="tab-icon">🛒</span> SHOP</button>
       <button class="hub-tab" data-tab="upgrades"><span class="tab-icon">⚡</span> UPGRADES</button>
     </div>
@@ -1222,6 +1393,14 @@
           <div class="coming-soon-item"><span class="item-name">🎲 MYSTERY BOX</span>Random rare unlocks</div>
         </div>
       </div>
+    </div>
+
+    <!-- CARDS PAGE -->
+    <div class="hub-page" id="page-cards" style="overflow-y:auto; padding: 28px 24px;">
+      <h3 class="cards-library-title">EQUIPPED — CLICK TO UNEQUIP</h3>
+      <div class="cards-equipped" id="cards-equipped"></div>
+      <h3 class="cards-library-title">LIBRARY — CLICK TO EQUIP</h3>
+      <div class="cards-library" id="cards-library"></div>
     </div>
 
     <!-- UPGRADES PAGE -->
@@ -1587,6 +1766,7 @@ function applyScytheTick(radius) {
     const dist = Math.hypot(dx, dy);
     if (dist < radius + e.r) {
       e.hp -= damage;
+      lifesteal(damage);
       e.hitFlash = 80;
       // Slight knockback (smaller than projectile, bosses still immune)
       if (!e.isBoss) {
@@ -1616,6 +1796,7 @@ function castStaff() {
 
   const damage = devMode.unlimitedDmg ? 99999 : player.projDamage;
   nearest.hp -= damage;
+  lifesteal(damage);
   nearest.hitFlash = 80;
   const hit = new Set([nearest]);
   // Visual arc from player to first target
@@ -1668,6 +1849,7 @@ function triggerChainLightning(fromEnemy, damage, chainsLeft, alreadyHit) {
 
     // Damage chained target
     nextTarget.hp -= currentDamage;
+    lifesteal(currentDamage);
     nextTarget.hitFlash = 80;
     alreadyHit.add(nextTarget);
 
@@ -1736,6 +1918,175 @@ const UPGRADES = [
   { id: 'pierce',    icon: '🔱', name: 'Piercer',          desc: '+1 enemy pierce per projectile',  apply: p => p.projPierce += 1 },
   { id: 'defense',   icon: '🛡️', name: 'Iron Hide',         desc: '−15% damage taken',               apply: p => p.damageMult *= 0.85 },
 ];
+
+// =============================================================
+// CARDS — passive abilities, equipped in 3 slots, persisted in localStorage
+// =============================================================
+const CARDS = [
+  { id: 'detonate',  icon: '💥', name: 'Detonate',  desc: 'Every 30s, deal 50% max HP to every non-boss enemy.', cooldown: 30000 },
+  { id: 'lifesteal', icon: '🩸', name: 'Lifesteal', desc: 'Heal for 2% of all damage you deal.',                  cooldown: 0 },
+  { id: 'shockwave', icon: '🌊', name: 'Shockwave', desc: 'When hit, blast nearby enemies for 40% current HP and knock them back. 30s cooldown.', cooldown: 30000 },
+];
+let equippedCards = ['detonate', 'lifesteal', 'shockwave']; // 3 slots, each card id or null
+let cardCooldowns = [0, 0, 0];                              // ms remaining, parallel to equippedCards
+let detonateFlash = 0;                                      // ms remaining for the white flash overlay
+
+function loadEquippedCards() {
+  try {
+    const raw = localStorage.getItem('sts_loadout');
+    if (!raw) return;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length !== 3) return;
+    equippedCards = arr.map(id => (CARDS.find(c => c.id === id) ? id : null));
+  } catch {}
+}
+function saveEquippedCards() {
+  try { localStorage.setItem('sts_loadout', JSON.stringify(equippedCards)); } catch {}
+}
+function getCardData(id) { return CARDS.find(c => c.id === id); }
+function hasCard(id) { return equippedCards.indexOf(id) !== -1; }
+function getCardSlot(id) { return equippedCards.indexOf(id); }
+
+// Lifesteal — called from each damage site. No-op if not equipped.
+function lifesteal(amount) {
+  if (!hasCard('lifesteal') || !player || amount <= 0) return;
+  player.hp = Math.min(player.maxHp, player.hp + amount * 0.02);
+}
+
+// Detonate — fires when its slot's cooldown reaches 0 (auto). Skips bosses.
+// Returns true if any enemy was hit (so callers know whether to consume the cooldown).
+function triggerDetonate() {
+  let hits = 0;
+  for (const e of enemies) {
+    if (e.isBoss) continue;
+    e.hp -= e.maxHp * 0.5;
+    e.hitFlash = 80;
+    hits++;
+  }
+  if (hits > 0) {
+    detonateFlash = 350;
+    burst(player.x, player.y, '#ffffff', 28, 6);
+    floatText(player.x, player.y - 30, '💥 DETONATE!', '#ffffff');
+  }
+  return hits > 0;
+}
+
+// Shockwave — fires when player takes damage and slot is ready. Damages bosses, no knockback on bosses.
+function triggerShockwave() {
+  const radius = 250;
+  const kbForce = 130; // per-frame impulse; decays at 0.7 → ~430px total displacement
+  for (const e of enemies) {
+    const dx = e.x - player.x, dy = e.y - player.y;
+    const d = Math.hypot(dx, dy);
+    if (d < radius + e.r) {
+      const dmg = e.hp * 0.4;
+      e.hp -= dmg;
+      e.hitFlash = 80;
+      if (!e.isBoss) {
+        e.knockbackX = (dx / (d || 1)) * kbForce;
+        e.knockbackY = (dy / (d || 1)) * kbForce;
+      }
+    }
+  }
+  particles.push({
+    x: player.x, y: player.y, vx: 0, vy: 0,
+    life: 500, maxLife: 500,
+    color: '#ffffff', r: 4, isRing: true, ringMax: radius,
+  });
+  burst(player.x, player.y, '#ffffff', 18, 5);
+  floatText(player.x, player.y - 24, '🌊 SHOCKWAVE!', '#ffffff');
+}
+
+// Tick auto-cards each frame. Only Detonate fires from here (Shockwave is reactive).
+function updateCards(dt) {
+  for (let i = 0; i < equippedCards.length; i++) {
+    const id = equippedCards[i];
+    if (!id) continue;
+    if (cardCooldowns[i] > 0) cardCooldowns[i] = Math.max(0, cardCooldowns[i] - dt);
+    if (id === 'detonate' && cardCooldowns[i] <= 0) {
+      // Only consume cooldown if it actually hit something — otherwise stay ready.
+      if (triggerDetonate()) cardCooldowns[i] = getCardData(id).cooldown;
+    }
+  }
+  if (detonateFlash > 0) detonateFlash = Math.max(0, detonateFlash - dt);
+}
+
+// In-game cards panel UI
+function refreshCardsPanel() {
+  const list = document.getElementById('cards-list');
+  if (!list) return;
+  list.innerHTML = equippedCards.map((id, idx) => {
+    if (!id) return `<div class="card-slot empty">slot ${idx + 1}</div>`;
+    const data = getCardData(id);
+    const cd = cardCooldowns[idx];
+    let opacity = 1;
+    let cdLine = '';
+    if (cd > 0 && data.cooldown > 0) {
+      const progress = 1 - (cd / data.cooldown); // 0 just-fired → 1 ready
+      opacity = 0.3 + 0.7 * progress;
+      cdLine = `<div class="card-cd">${Math.ceil(cd / 1000)}s</div>`;
+    }
+    return `
+      <div class="card-slot" style="opacity:${opacity.toFixed(2)};">
+        <div class="card-icon">${data.icon}</div>
+        <div class="card-info">
+          <div class="card-name">${data.name}</div>
+          ${cdLine}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Hub Cards tab UI — equipped slots + library, click to equip/unequip
+function refreshCardsPage() {
+  const slotsEl = document.getElementById('cards-equipped');
+  const libEl = document.getElementById('cards-library');
+  if (!slotsEl || !libEl) return;
+  slotsEl.innerHTML = equippedCards.map((id, idx) => {
+    if (!id) return `<div class="equipped-slot empty"><div class="slot-num">SLOT ${idx + 1}</div><div>empty</div></div>`;
+    const data = getCardData(id);
+    return `
+      <div class="equipped-slot" data-slot="${idx}">
+        <div class="slot-num">SLOT ${idx + 1}</div>
+        <div class="slot-icon">${data.icon}</div>
+        <div class="slot-name">${data.name}</div>
+        <div class="slot-desc">${data.desc}</div>
+      </div>`;
+  }).join('');
+  libEl.innerHTML = CARDS.map(c => {
+    const equipped = hasCard(c.id);
+    return `
+      <div class="card-tile${equipped ? ' equipped' : ''}" data-card="${c.id}">
+        <div class="tile-head">
+          <div class="tile-icon">${c.icon}</div>
+          <div class="tile-name">${c.name}</div>
+        </div>
+        <div class="tile-desc">${c.desc}</div>
+        <div class="tile-status">${equipped ? 'EQUIPPED' : 'CLICK TO EQUIP'}</div>
+      </div>`;
+  }).join('');
+  slotsEl.querySelectorAll('.equipped-slot[data-slot]').forEach(el => {
+    el.addEventListener('click', () => {
+      const slot = parseInt(el.dataset.slot, 10);
+      equippedCards[slot] = null;
+      cardCooldowns[slot] = 0;
+      saveEquippedCards();
+      refreshCardsPage();
+    });
+  });
+  libEl.querySelectorAll('.card-tile').forEach(el => {
+    el.addEventListener('click', () => {
+      const cardId = el.dataset.card;
+      if (hasCard(cardId)) return;
+      const empty = equippedCards.indexOf(null);
+      if (empty === -1) return;
+      equippedCards[empty] = cardId;
+      cardCooldowns[empty] = 0; // newly equipped → ready
+      saveEquippedCards();
+      refreshCardsPage();
+    });
+  });
+}
 
 function pickUpgrades() {
   // Pick 3 unique upgrades
@@ -1940,6 +2291,9 @@ function update(dt) {
 
   if (player.hurtFlash > 0) player.hurtFlash -= dt;
 
+  // --- Cards (Detonate auto-fires; Shockwave is reactive) ---
+  updateCards(dt);
+
   // --- Spawning ---
   updateSpawning(dt);
 
@@ -1998,6 +2352,7 @@ function update(dt) {
         if (Math.hypot(dx, dy) < bh.explosionRadius + e.r) {
           const dmg = devMode.unlimitedDmg ? 99999 : e.maxHp * 0.7;
           e.hp -= dmg;
+          lifesteal(dmg);
           e.hitFlash = 80;
         }
       }
@@ -2036,7 +2391,9 @@ function update(dt) {
       const dx = e.x - p.x, dy = e.y - p.y;
       const dist = Math.hypot(dx, dy);
       if (dist < e.r + p.r) {
-        e.hp -= devMode.unlimitedDmg ? 99999 : p.damage;
+        const projDmg = devMode.unlimitedDmg ? 99999 : p.damage;
+        e.hp -= projDmg;
+        lifesteal(projDmg);
         e.hitFlash = 80;
         // Knockback (bosses are immune)
         if (!e.isBoss) {
@@ -2072,6 +2429,7 @@ function update(dt) {
         e.burnTickAccum -= 250;
         const tickDmg = e.burnDamagePerSec * 0.25;
         e.hp -= tickDmg;
+        lifesteal(tickDmg);
       }
       if (e.burnTime <= 0) {
         e.burnTime = 0;
@@ -2139,6 +2497,12 @@ function update(dt) {
         player.hurtFlash = 600;
         burst(player.x, player.y, '#ff3b3b', 10, 3);
         floatText(player.x, player.y - 20, `-${taken}`, '#ff3b3b');
+        // Shockwave card: blast nearby enemies if equipped and ready
+        const swSlot = getCardSlot('shockwave');
+        if (swSlot !== -1 && cardCooldowns[swSlot] <= 0) {
+          triggerShockwave();
+          cardCooldowns[swSlot] = getCardData('shockwave').cooldown;
+        }
         if (player.hp <= 0) {
           gameOver();
           return;
@@ -2719,7 +3083,8 @@ function drawParticle(p) {
   if (p.isRing) {
     // Magnet shockwave: expanding hollow ring
     const progress = 1 - (p.life / p.maxLife); // 0..1
-    const radius = 20 + progress * 200;
+    const ringMax = p.ringMax || 220;
+    const radius = 20 + progress * (ringMax - 20);
     ctx.strokeStyle = p.color;
     ctx.lineWidth = 4 * (1 - progress) + 1;
     ctx.shadowColor = p.color;
@@ -2781,6 +3146,13 @@ function render() {
   ctx.restore();
 
   // Viewport-space overlays (camera-independent, fill the visible canvas)
+  if (detonateFlash > 0) {
+    const alpha = Math.min(0.55, (detonateFlash / 350) * 0.55);
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
   drawBossWarning();
 }
 
@@ -2817,6 +3189,8 @@ function updateHUD() {
   document.getElementById('sp-enemies').textContent = enemies.length;
   document.getElementById('sp-kills').textContent = kills;
   document.getElementById('sp-time').textContent = timeStr;
+
+  refreshCardsPanel();
 }
 
 // =============================================================
@@ -2867,6 +3241,7 @@ function setHubTab(tabName) {
   document.querySelectorAll('.hub-page').forEach(p => {
     p.classList.toggle('active', p.id === 'page-' + tabName);
   });
+  if (tabName === 'cards') refreshCardsPage();
 }
 
 function showHub(tab) {
@@ -2923,6 +3298,9 @@ function startGame() {
   }
   player = makePlayer();
   updateCamera();
+  // Reset card cooldowns — all equipped cards are ready immediately at run start.
+  cardCooldowns = [0, 0, 0];
+  detonateFlash = 0;
   enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
   blackHoles = []; scytheEffects = []; blackHoleSpawnTimer = BLACK_HOLE_RATE;
   timeMs = 0; kills = 0; wave = 1; waveTimer = 0; spawnTimer = 0;
@@ -3153,6 +3531,9 @@ document.getElementById('game').addEventListener('click', togglePause);
 // Game over buttons
 document.getElementById('restart-btn').onclick = startGame;
 document.getElementById('hub-return-btn').onclick = () => showHub('home');
+
+// Load saved card loadout (if any) before showing the hub.
+loadEquippedCards();
 
 // Initial state: show the hub on the home tab
 showHub('home');
