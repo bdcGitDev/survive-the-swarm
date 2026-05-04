@@ -2629,7 +2629,8 @@ function drawScytheEffect(s) {
   const progress = 1 - alpha; // 0..1 — used for sweep angle
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.translate(s.x, s.y);
+  // Always render centered on the player so the swing follows movement
+  ctx.translate(player.x, player.y);
   ctx.rotate(progress * Math.PI * 2); // full spin over the lifetime
   // Outer ring (radius pulse)
   ctx.strokeStyle = 'rgba(255, 45, 117, 0.85)';
