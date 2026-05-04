@@ -1326,6 +1326,10 @@ let wave = 1;
 let waveTimer = 0;
 const WAVE_DURATION = 20000; // 20s per wave
 
+// Weapon cooldowns that don't scale with player.fireRate
+const SCYTHE_RATE = 1000;     // ms between scythe swings
+const BLACK_HOLE_RATE = 4000; // ms between black hole spawns
+
 // Entities
 let player, enemies = [], projectiles = [], gems = [], healthPacks = [], magnets = [], particles = [], floatingTexts = [];
 
@@ -1928,7 +1932,7 @@ function update(dt) {
     player.scytheCooldown -= dt;
     if (player.scytheCooldown <= 0) {
       castScythe();
-      player.scytheCooldown = player.fireRate;
+      player.scytheCooldown = SCYTHE_RATE;
     }
   }
 
@@ -1946,7 +1950,7 @@ function update(dt) {
     blackHoleSpawnTimer -= dt;
     if (blackHoleSpawnTimer <= 0) {
       spawnBlackHole();
-      blackHoleSpawnTimer = 4000;
+      blackHoleSpawnTimer = BLACK_HOLE_RATE;
     }
   }
   for (let i = blackHoles.length - 1; i >= 0; i--) {
@@ -2870,7 +2874,7 @@ function startGame() {
   }
   player = makePlayer();
   enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
-  blackHoles = []; scytheEffects = []; blackHoleSpawnTimer = 4000;
+  blackHoles = []; scytheEffects = []; blackHoleSpawnTimer = BLACK_HOLE_RATE;
   timeMs = 0; kills = 0; wave = 1; waveTimer = 0; spawnTimer = 0;
   bossActive = false; bossWarning = 0; bossSpawnPending = false; lastBossWave = 0; bossesDefeated = 0;
   pendingWeaponScreen = false;
