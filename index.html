@@ -1073,6 +1073,7 @@
       <span>Unlimited Damage</span>
     </label>
     <button id="dev-skip-wave">Skip Wave</button>
+    <button id="dev-add-level">Add Level</button>
     <div class="hint">Press U to close</div>
   </div>
 
@@ -1372,6 +1373,12 @@ document.getElementById('dev-skip-wave').addEventListener('click', () => {
   }
   // Trigger wave advance on next frame
   waveTimer = WAVE_DURATION;
+});
+document.getElementById('dev-add-level').addEventListener('click', () => {
+  if (state !== 'playing') return;
+  player.level++;
+  player.xpToNext = Math.floor(player.xpToNext * 1.3 + 2);
+  showLevelUp();
 });
 
 // =============================================================
