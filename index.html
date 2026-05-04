@@ -1929,6 +1929,7 @@ const CARDS = [
 ];
 let equippedCards = ['detonate', 'lifesteal', 'shockwave']; // 3 slots, each card id or null
 let cardCooldowns = [0, 0, 0];                              // ms remaining, parallel to equippedCards
+let shockwaveEffects = [];                                  // active shockwave rings (push from triggerShockwave)
 let detonateFlash = 0;                                      // ms remaining for the yellow flash overlay
 const DETONATE_FLASH_MAX = 700;                             // peak duration of the flash
 // Camera shake state (used by Detonate). Decays linearly with time remaining.
@@ -1993,30 +1994,61 @@ function triggerDetonate() {
 }
 
 // Shockwave — fires when player takes damage and slot is ready. Damages bosses, no knockback on bosses.
+// Shockwave is applied as an expanding-ring effect — damage and knockback fire
+// when the ring reaches each enemy, so the visual stays in sync with the hits.
 function triggerShockwave() {
-  const radius = 350;
-  const kbForce = 130; // per-frame impulse; decays at 0.7 → ~430px total displacement
-  for (const e of enemies) {
-    const dx = e.x - player.x, dy = e.y - player.y;
-    const d = Math.hypot(dx, dy);
-    if (d < radius + e.r) {
-      const dmg = e.hp * 0.4;
-      e.hp -= dmg;
-      e.hitFlash = 80;
-      if (!e.isBoss) {
-        e.knockbackX = (dx / (d || 1)) * kbForce;
-        e.knockbackY = (dy / (d || 1)) * kbForce;
-      }
-    }
-  }
-  // Slower, larger cyan ring that lingers (1000ms).
-  particles.push({
-    x: player.x, y: player.y, vx: 0, vy: 0,
-    life: 1000, maxLife: 1000,
-    color: '#00f0ff', r: 4, isRing: true, ringMax: radius,
+  shockwaveEffects.push({
+    x: player.x, y: player.y,
+    age: 0, maxAge: 750,
+    maxRadius: 350,
+    hit: new Set(),
   });
   burst(player.x, player.y, '#00f0ff', 20, 5);
   floatText(player.x, player.y - 24, '🌊 SHOCKWAVE!', '#00f0ff');
+}
+
+function updateShockwaves(dt) {
+  const kbForce = 130;
+  for (let i = shockwaveEffects.length - 1; i >= 0; i--) {
+    const s = shockwaveEffects[i];
+    s.age += dt;
+    const progress = Math.min(1, s.age / s.maxAge);
+    const currentRadius = progress * s.maxRadius;
+    for (const e of enemies) {
+      if (s.hit.has(e)) continue;
+      const dx = e.x - s.x, dy = e.y - s.y;
+      const d = Math.hypot(dx, dy);
+      // The ring "reaches" the enemy when its leading edge crosses the enemy's near side.
+      if (d - e.r <= currentRadius) {
+        const dmg = e.hp * 0.4;
+        e.hp -= dmg;
+        e.hitFlash = 80;
+        if (!e.isBoss) {
+          e.knockbackX = (dx / (d || 1)) * kbForce;
+          e.knockbackY = (dy / (d || 1)) * kbForce;
+        }
+        s.hit.add(e);
+      }
+    }
+    if (s.age >= s.maxAge) shockwaveEffects.splice(i, 1);
+  }
+}
+
+function drawShockwave(s) {
+  const progress = Math.min(1, s.age / s.maxAge);
+  const radius = progress * s.maxRadius;
+  const alpha = 1 - progress;
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 5 * (1 - progress) + 1.5;
+  ctx.shadowColor = '#00f0ff';
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
 }
 
 // Tick auto-cards each frame. Only Detonate fires from here (Shockwave is reactive).
@@ -2316,6 +2348,7 @@ function update(dt) {
 
   // --- Cards (Detonate auto-fires; Shockwave is reactive) ---
   updateCards(dt);
+  updateShockwaves(dt);
 
   // --- Spawning ---
   updateSpawning(dt);
@@ -3166,6 +3199,8 @@ function render() {
   drawLightningArcs();
   // scythe swing effects
   for (const s of scytheEffects) drawScytheEffect(s);
+  // shockwave rings
+  for (const s of shockwaveEffects) drawShockwave(s);
   // player
   drawPlayer();
   // particles
@@ -3334,7 +3369,7 @@ function startGame() {
   cameraShakeTime = 0;
   cameraShakeAmp = 0;
   enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
-  blackHoles = []; scytheEffects = []; blackHoleSpawnTimer = BLACK_HOLE_RATE;
+  blackHoles = []; scytheEffects = []; shockwaveEffects = []; blackHoleSpawnTimer = BLACK_HOLE_RATE;
   timeMs = 0; kills = 0; wave = 1; waveTimer = 0; spawnTimer = 0;
   bossActive = false; bossWarning = 0; bossSpawnPending = false; lastBossWave = 0; bossesDefeated = 0;
   pendingWeaponScreen = false;
