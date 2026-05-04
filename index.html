@@ -1924,7 +1924,7 @@ const UPGRADES = [
 // =============================================================
 const CARDS = [
   { id: 'detonate',  icon: '💥', name: 'Detonate',  desc: 'Every 30s, deal 50% max HP to every non-boss enemy.', cooldown: 30000 },
-  { id: 'lifesteal', icon: '🩸', name: 'Lifesteal', desc: 'Heal for 2% of all damage you deal.',                  cooldown: 0 },
+  { id: 'lifesteal', icon: '🩸', name: 'Lifesteal', desc: 'Heal for 0.5% of all damage you deal.',                cooldown: 0 },
   { id: 'shockwave', icon: '🌊', name: 'Shockwave', desc: 'When hit, blast nearby enemies for 40% current HP and knock them back. 30s cooldown.', cooldown: 30000 },
 ];
 let equippedCards = ['detonate', 'lifesteal', 'shockwave']; // 3 slots, each card id or null
@@ -1950,7 +1950,7 @@ function getCardSlot(id) { return equippedCards.indexOf(id); }
 // Lifesteal — called from each damage site. No-op if not equipped.
 function lifesteal(amount) {
   if (!hasCard('lifesteal') || !player || amount <= 0) return;
-  player.hp = Math.min(player.maxHp, player.hp + amount * 0.02);
+  player.hp = Math.min(player.maxHp, player.hp + amount * 0.005);
 }
 
 // Detonate — fires when its slot's cooldown reaches 0 (auto). Skips bosses.
