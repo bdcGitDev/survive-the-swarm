@@ -1923,13 +1923,26 @@ const UPGRADES = [
 // CARDS — passive abilities, equipped in 3 slots, persisted in localStorage
 // =============================================================
 const CARDS = [
-  { id: 'detonate',  icon: '💥', name: 'Detonate',  desc: 'Every 30s, deal 50% max HP to every non-boss enemy.', cooldown: 30000 },
+  { id: 'detonate',  icon: '💥', name: 'Detonate',  desc: 'Every 45s, deal 50% max HP to every non-boss enemy.', cooldown: 45000 },
   { id: 'lifesteal', icon: '🩸', name: 'Lifesteal', desc: 'Heal for 0.5% of all damage you deal.',                cooldown: 0 },
   { id: 'shockwave', icon: '🌊', name: 'Shockwave', desc: 'When hit, blast nearby enemies for 40% current HP and knock them back. 30s cooldown.', cooldown: 30000 },
 ];
 let equippedCards = ['detonate', 'lifesteal', 'shockwave']; // 3 slots, each card id or null
 let cardCooldowns = [0, 0, 0];                              // ms remaining, parallel to equippedCards
-let detonateFlash = 0;                                      // ms remaining for the white flash overlay
+let detonateFlash = 0;                                      // ms remaining for the yellow flash overlay
+const DETONATE_FLASH_MAX = 700;                             // peak duration of the flash
+// Camera shake state (used by Detonate). Decays linearly with time remaining.
+let cameraShakeTime = 0;
+let cameraShakeStart = 0;
+let cameraShakeAmp = 0;
+
+function startCameraShake(amp, duration) {
+  // If a stronger shake is already active, leave it alone.
+  if (cameraShakeTime > 0 && cameraShakeAmp >= amp) return;
+  cameraShakeAmp = amp;
+  cameraShakeTime = duration;
+  cameraShakeStart = duration;
+}
 
 function loadEquippedCards() {
   try {
@@ -1964,16 +1977,24 @@ function triggerDetonate() {
     hits++;
   }
   if (hits > 0) {
-    detonateFlash = 350;
-    burst(player.x, player.y, '#ffffff', 28, 6);
-    floatText(player.x, player.y - 30, '💥 DETONATE!', '#ffffff');
+    detonateFlash = DETONATE_FLASH_MAX;
+    burst(player.x, player.y, '#ffc350', 32, 6);
+    // Big slow yellow-orange ring filling the visible screen.
+    particles.push({
+      x: player.x, y: player.y, vx: 0, vy: 0,
+      life: 900, maxLife: 900,
+      color: '#ffaa33', r: 4,
+      isRing: true, ringMax: 600,
+    });
+    floatText(player.x, player.y - 30, '💥 DETONATE!', '#ffc350');
+    startCameraShake(4, 350);
   }
   return hits > 0;
 }
 
 // Shockwave — fires when player takes damage and slot is ready. Damages bosses, no knockback on bosses.
 function triggerShockwave() {
-  const radius = 250;
+  const radius = 350;
   const kbForce = 130; // per-frame impulse; decays at 0.7 → ~430px total displacement
   for (const e of enemies) {
     const dx = e.x - player.x, dy = e.y - player.y;
@@ -1988,13 +2009,14 @@ function triggerShockwave() {
       }
     }
   }
+  // Slower, larger cyan ring that lingers (1000ms).
   particles.push({
     x: player.x, y: player.y, vx: 0, vy: 0,
-    life: 500, maxLife: 500,
-    color: '#ffffff', r: 4, isRing: true, ringMax: radius,
+    life: 1000, maxLife: 1000,
+    color: '#00f0ff', r: 4, isRing: true, ringMax: radius,
   });
-  burst(player.x, player.y, '#ffffff', 18, 5);
-  floatText(player.x, player.y - 24, '🌊 SHOCKWAVE!', '#ffffff');
+  burst(player.x, player.y, '#00f0ff', 20, 5);
+  floatText(player.x, player.y - 24, '🌊 SHOCKWAVE!', '#00f0ff');
 }
 
 // Tick auto-cards each frame. Only Detonate fires from here (Shockwave is reactive).
@@ -2009,6 +2031,7 @@ function updateCards(dt) {
     }
   }
   if (detonateFlash > 0) detonateFlash = Math.max(0, detonateFlash - dt);
+  if (cameraShakeTime > 0) cameraShakeTime = Math.max(0, cameraShakeTime - dt);
 }
 
 // In-game cards panel UI
@@ -3117,7 +3140,14 @@ function render() {
 
   // World drawing — everything in world coords, offset by the camera.
   ctx.save();
-  ctx.translate(-cameraX, -cameraY);
+  let shakeX = 0, shakeY = 0;
+  if (cameraShakeTime > 0 && cameraShakeStart > 0) {
+    const decay = cameraShakeTime / cameraShakeStart;
+    const amp = cameraShakeAmp * decay;
+    shakeX = (Math.random() - 0.5) * 2 * amp;
+    shakeY = (Math.random() - 0.5) * 2 * amp;
+  }
+  ctx.translate(-cameraX + shakeX, -cameraY + shakeY);
 
   drawGrid();
   drawWorldBounds();
@@ -3147,9 +3177,9 @@ function render() {
 
   // Viewport-space overlays (camera-independent, fill the visible canvas)
   if (detonateFlash > 0) {
-    const alpha = Math.min(0.55, (detonateFlash / 350) * 0.55);
+    const alpha = Math.min(0.55, (detonateFlash / DETONATE_FLASH_MAX) * 0.55);
     ctx.save();
-    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.fillStyle = `rgba(255, 180, 70, ${alpha})`;
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
   }
@@ -3301,6 +3331,8 @@ function startGame() {
   // Reset card cooldowns — all equipped cards are ready immediately at run start.
   cardCooldowns = [0, 0, 0];
   detonateFlash = 0;
+  cameraShakeTime = 0;
+  cameraShakeAmp = 0;
   enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
   blackHoles = []; scytheEffects = []; blackHoleSpawnTimer = BLACK_HOLE_RATE;
   timeMs = 0; kills = 0; wave = 1; waveTimer = 0; spawnTimer = 0;
