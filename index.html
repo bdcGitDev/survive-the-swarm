@@ -1505,7 +1505,15 @@ function updateSpawning(dt) {
   if (bossActive || bossSpawnPending || bossWarning > 0) return;
 
   // spawn rate scales with wave
-  const spawnInterval = Math.max(280, 1000 - wave * 50);
+  // Up to wave 15: ramp interval down to 280ms (≈3.6/sec).
+  // After wave 15: gentle linear rate growth (+0.075 enemies/sec per wave) instead of a hard cap.
+  let spawnInterval;
+  if (wave <= 15) {
+    spawnInterval = Math.max(280, 1000 - wave * 50);
+  } else {
+    const rate = (1000 / 280) + (wave - 15) * 0.075;
+    spawnInterval = 1000 / rate;
+  }
   spawnTimer += dt;
   while (spawnTimer >= spawnInterval) {
     spawnTimer -= spawnInterval;
