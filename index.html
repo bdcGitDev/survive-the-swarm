@@ -1420,7 +1420,7 @@ function spawnEnemy() {
   else                 { x = Math.random() * W; y = H + 20; }
 
   // Wave-scaled stats
-  const hpScale = 1 + (wave - 1) * 0.20;
+  const hpScale = 1 + (wave - 1) * 0.15;
   const speedScale = 1 + (wave - 1) * 0.04;
   const dmgScale = 1 + (wave - 1) * 0.025;
 
@@ -1498,7 +1498,7 @@ function updateSpawning(dt) {
   if (bossActive || bossSpawnPending || bossWarning > 0) return;
 
   // spawn rate scales with wave
-  const spawnInterval = Math.max(220, 1000 - wave * 60);
+  const spawnInterval = Math.max(280, 1000 - wave * 50);
   spawnTimer += dt;
   while (spawnTimer >= spawnInterval) {
     spawnTimer -= spawnInterval;
