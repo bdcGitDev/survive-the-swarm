@@ -1112,9 +1112,9 @@
     <div class="storage-warn" id="storage-warn"></div>
   </div>
 
-  <!-- Legendaries panel (left side, in-game only) -->
+  <!-- Weapons panel (left side, in-game only) -->
   <div id="legendaries-panel" class="ingame-only hidden">
-    <div class="legendaries-title">★ LEGENDARIES</div>
+    <div class="legendaries-title">★ WEAPONS</div>
     <div id="legendaries-list">
       <div class="leg-empty">none yet — defeat a boss</div>
     </div>
@@ -1249,10 +1249,10 @@
     <div id="upgrade-choices"></div>
   </div>
 
-  <!-- Legendary upgrade screen (boss reward) -->
+  <!-- Weapon unlock screen (boss reward) -->
   <div class="overlay hidden" id="legendary">
-    <h1 class="legendary-title">★ LEGENDARY ★</h1>
-    <h2>weapon evolution unlocked</h2>
+    <h1 class="legendary-title">★ NEW WEAPON ★</h1>
+    <h2>choose a weapon</h2>
     <div id="legendary-choices"></div>
   </div>
 
@@ -1335,9 +1335,14 @@ let bossWarning = 0; // ms remaining on warning
 let bossSpawnPending = false;
 let lastBossWave = 0;
 let bossesDefeated = 0; // run-scoped counter for gem rewards
-let pendingLegendaryScreen = false;
+let pendingWeaponScreen = false;
 let pendingBossUpgradeScreen = false;
 let lightningArcs = [];
+
+// Weapon-related state
+let blackHoles = [];                // active black hole effects on the map
+let blackHoleSpawnTimer = 0;        // ms until next black hole spawns
+let scytheEffects = [];             // visual swing effects from scythe ticks
 
 // Input
 const keys = {};
@@ -1385,12 +1390,15 @@ function makePlayer() {
     pickupRadius: 50,
     // damage flash
     hurtFlash: 0,
-    // Legendary weapon upgrades (boss rewards)
-    legendaries: {
-      chain: false,   // Chain Lightning: projectiles bounce up to 3 times
-      flame: false,   // Flame Shot: projectiles ignite enemies (DoT)
-      ice: false,     // Ice Shot: projectiles slow enemies
+    // Weapons unlocked from boss rewards (in addition to slingshot)
+    weapons: {
+      scythe: false,     // Spinning AoE around player
+      staff: false,      // Auto-target chain lightning (3 enemies)
+      blackHole: false,  // Periodic vortex that pulls + explodes for 70% HP
     },
+    // Per-weapon cooldown timers (ms)
+    scytheCooldown: 0,
+    staffCooldown: 0,
   };
 }
 
@@ -1525,13 +1533,84 @@ function fireWeapon() {
       pierce: player.projPierce,
       hit: new Set(),
       life: 1500,
-      chainsLeft: player.legendaries.chain ? 3 : 0,
     });
   }
 }
 
 // =============================================================
-// CHAIN LIGHTNING
+// WEAPON: SCYTHE — spinning 360 AoE around the player
+// =============================================================
+function castScythe() {
+  const radius = 80;
+  const damage = devMode.unlimitedDmg ? 99999 : player.projDamage;
+  let anyHit = false;
+  for (const e of enemies) {
+    const dx = e.x - player.x, dy = e.y - player.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < radius + e.r) {
+      e.hp -= damage;
+      e.hitFlash = 80;
+      // Slight knockback (smaller than projectile, bosses still immune)
+      if (!e.isBoss) {
+        const kb = 2;
+        e.knockbackX = (dx / (dist || 1)) * kb;
+        e.knockbackY = (dy / (dist || 1)) * kb;
+      }
+      anyHit = true;
+    }
+  }
+  // Visual swing
+  scytheEffects.push({ x: player.x, y: player.y, life: 220, maxLife: 220, radius });
+  if (anyHit) burst(player.x, player.y, '#ff2d75', 6, 2);
+}
+
+// =============================================================
+// WEAPON: LIGHTNING STAFF — auto-zaps nearest + chains 2 more (3 total)
+// =============================================================
+function castStaff() {
+  // Find nearest enemy within range
+  let nearest = null;
+  let nearestDist = 380; // max acquisition range
+  for (const e of enemies) {
+    const dx = e.x - player.x, dy = e.y - player.y;
+    const d = Math.hypot(dx, dy);
+    if (d < nearestDist) { nearestDist = d; nearest = e; }
+  }
+  if (!nearest) return;
+
+  const damage = devMode.unlimitedDmg ? 99999 : player.projDamage;
+  nearest.hp -= damage;
+  nearest.hitFlash = 80;
+  const hit = new Set([nearest]);
+  // Visual arc from player to first target
+  lightningArcs.push({
+    x1: player.x, y1: player.y,
+    x2: nearest.x, y2: nearest.y,
+    life: 200, maxLife: 200,
+  });
+  // Chain to 2 more enemies (3 total)
+  triggerChainLightning(nearest, damage * 0.7, 2, hit);
+}
+
+// =============================================================
+// WEAPON: BLACK HOLE — spawns at random spot, pulls then explodes
+// =============================================================
+function spawnBlackHole() {
+  // Random map position (with some margin from the edge)
+  const margin = 80;
+  const x = margin + Math.random() * (W - margin * 2);
+  const y = margin + Math.random() * (H - margin * 2);
+  blackHoles.push({
+    x, y,
+    age: 0,
+    exploded: false,
+    pullRadius: 200,
+    explosionRadius: 100,
+  });
+}
+
+// =============================================================
+// CHAIN LIGHTNING (used by Lightning Staff)
 // =============================================================
 function triggerChainLightning(fromEnemy, damage, chainsLeft, alreadyHit) {
   let current = fromEnemy;
@@ -1554,19 +1633,10 @@ function triggerChainLightning(fromEnemy, damage, chainsLeft, alreadyHit) {
     }
     if (!nextTarget) break;
 
-    // Damage and apply same-hit effects
+    // Damage chained target
     nextTarget.hp -= currentDamage;
     nextTarget.hitFlash = 80;
     alreadyHit.add(nextTarget);
-    if (player.legendaries.flame) {
-      nextTarget.burnTime = 3000;
-      nextTarget.burnDamagePerSec = player.projDamage * 0.5;
-      nextTarget.burnTickAccum = 0;
-    }
-    if (player.legendaries.ice) {
-      nextTarget.slowTime = 2000;
-      nextTarget.slowFactor = 0.4;
-    }
 
     // Visual arc from current to next
     lightningArcs.push({
@@ -1720,49 +1790,49 @@ function showBossUpgrade() {
 }
 
 // =============================================================
-// LEGENDARY UPGRADES (boss rewards)
+// WEAPONS (boss rewards — added to your arsenal alongside slingshot)
 // =============================================================
-const LEGENDARIES = [
+const WEAPONS = [
   {
-    id: 'chain',
+    id: 'scythe',
+    icon: '🪓',
+    name: 'SCYTHE',
+    desc: 'Spinning AoE around you. Hits all nearby enemies on your fire-rate cooldown.',
+  },
+  {
+    id: 'staff',
     icon: '⚡',
-    name: 'CHAIN LIGHTNING',
-    desc: 'Projectiles bounce to up to 3 nearby enemies. Each bounce deals 70% of the previous damage.',
+    name: 'LIGHTNING STAFF',
+    desc: 'Auto-zaps the nearest enemy and chains to 2 more (3 total) on your fire-rate cooldown.',
   },
   {
-    id: 'flame',
-    icon: '🔥',
-    name: 'FLAME SHOT',
-    desc: 'Projectiles ignite enemies. Burning enemies take damage over 3 seconds.',
-  },
-  {
-    id: 'ice',
-    icon: '❄️',
-    name: 'ICE SHOT',
-    desc: 'Projectiles slow enemies by 60% for 2 seconds.',
+    id: 'blackHole',
+    icon: '🕳️',
+    name: 'BLACK HOLE',
+    desc: 'Every 4s, a vortex appears at random and pulls enemies in for 2s before exploding for 70% of their HP.',
   },
 ];
 
-function showLegendaryUpgrade() {
+function showWeaponUpgrade() {
   state = 'levelup'; // reuse paused-loop behavior
   const container = document.getElementById('legendary-choices');
   container.innerHTML = '';
-  LEGENDARIES.forEach(leg => {
-    const owned = player.legendaries[leg.id];
+  WEAPONS.forEach(w => {
+    const owned = player.weapons[w.id];
     const card = document.createElement('div');
     card.className = 'legendary-card' + (owned ? ' owned' : '');
     card.innerHTML = `
       <span class="owned-tag">OWNED</span>
-      <div class="icon">${leg.icon}</div>
-      <div class="name">${leg.name}</div>
-      <div class="desc">${leg.desc}</div>
+      <div class="icon">${w.icon}</div>
+      <div class="name">${w.name}</div>
+      <div class="desc">${w.desc}</div>
     `;
     if (!owned) {
       card.onclick = () => {
-        player.legendaries[leg.id] = true;
+        player.weapons[w.id] = true;
         document.getElementById('legendary').classList.add('hidden');
-        refreshLegendariesPanel();
-        floatText(player.x, player.y - 40, `${leg.name}!`, '#ffd60a');
+        refreshWeaponsPanel();
+        floatText(player.x, player.y - 40, `${w.name}!`, '#ffd60a');
         state = 'playing';
         lastFrame = performance.now();
       };
@@ -1772,18 +1842,18 @@ function showLegendaryUpgrade() {
   document.getElementById('legendary').classList.remove('hidden');
 }
 
-function refreshLegendariesPanel() {
+function refreshWeaponsPanel() {
   const list = document.getElementById('legendaries-list');
   if (!player) return;
-  const owned = LEGENDARIES.filter(l => player.legendaries[l.id]);
+  const owned = WEAPONS.filter(w => player.weapons[w.id]);
   if (owned.length === 0) {
     list.innerHTML = '<div class="leg-empty">none yet — defeat a boss</div>';
     return;
   }
-  list.innerHTML = owned.map(l => `
+  list.innerHTML = owned.map(w => `
     <div class="leg-item">
-      <div class="leg-icon">${l.icon}</div>
-      <div class="leg-name">${l.name}</div>
+      <div class="leg-icon">${w.icon}</div>
+      <div class="leg-name">${w.name}</div>
     </div>
   `).join('');
 }
@@ -1846,6 +1916,70 @@ function update(dt) {
     player.fireCooldown = player.fireRate;
   }
 
+  // --- Scythe (spinning AoE around player) ---
+  if (player.weapons.scythe) {
+    player.scytheCooldown -= dt;
+    if (player.scytheCooldown <= 0) {
+      castScythe();
+      player.scytheCooldown = player.fireRate;
+    }
+  }
+
+  // --- Lightning Staff (auto-zap nearest + chain to 2 more) ---
+  if (player.weapons.staff) {
+    player.staffCooldown -= dt;
+    if (player.staffCooldown <= 0) {
+      castStaff();
+      player.staffCooldown = player.fireRate;
+    }
+  }
+
+  // --- Black Hole (spawn one every 4s; update active ones) ---
+  if (player.weapons.blackHole) {
+    blackHoleSpawnTimer -= dt;
+    if (blackHoleSpawnTimer <= 0) {
+      spawnBlackHole();
+      blackHoleSpawnTimer = 4000;
+    }
+  }
+  for (let i = blackHoles.length - 1; i >= 0; i--) {
+    const bh = blackHoles[i];
+    bh.age += dt;
+    if (bh.age < 2000) {
+      // Pull phase — drag enemies toward the center
+      for (const e of enemies) {
+        const dx = bh.x - e.x, dy = bh.y - e.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < bh.pullRadius && dist > 4) {
+          const pull = 1.6 * (1 - dist / bh.pullRadius);
+          e.x += (dx / dist) * pull;
+          e.y += (dy / dist) * pull;
+        }
+      }
+    } else if (!bh.exploded) {
+      // Explosion phase — 70% of max HP to all enemies in blast radius
+      bh.exploded = true;
+      for (const e of enemies) {
+        const dx = e.x - bh.x, dy = e.y - bh.y;
+        if (Math.hypot(dx, dy) < bh.explosionRadius + e.r) {
+          const dmg = devMode.unlimitedDmg ? 99999 : e.maxHp * 0.7;
+          e.hp -= dmg;
+          e.hitFlash = 80;
+        }
+      }
+      burst(bh.x, bh.y, '#a855f7', 35, 6);
+      burst(bh.x, bh.y, '#ffffff', 20, 5);
+      floatText(bh.x, bh.y - 20, 'BOOM!', '#a855f7');
+    }
+    if (bh.age > 2400) blackHoles.splice(i, 1);
+  }
+
+  // --- Scythe visual effects (fade out) ---
+  for (let i = scytheEffects.length - 1; i >= 0; i--) {
+    scytheEffects[i].life -= dt;
+    if (scytheEffects[i].life <= 0) scytheEffects.splice(i, 1);
+  }
+
   // --- Projectiles ---
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
@@ -1872,23 +2006,6 @@ function update(dt) {
         }
         burst(p.x, p.y, '#ffffff', 4, 2);
         p.hit.add(e);
-
-        // === LEGENDARY EFFECTS ===
-        // Flame Shot: ignite the enemy (burn DoT)
-        if (player.legendaries.flame) {
-          e.burnTime = 3000;                     // 3 seconds
-          e.burnDamagePerSec = player.projDamage * 0.5;
-          e.burnTickAccum = 0;
-        }
-        // Ice Shot: slow the enemy
-        if (player.legendaries.ice) {
-          e.slowTime = 2000;                     // 2 seconds
-          e.slowFactor = 0.4;                    // 60% slower
-        }
-        // Chain Lightning: bounce to next enemies
-        if (player.legendaries.chain && p.chainsLeft > 0) {
-          triggerChainLightning(e, p.damage * 0.7, p.chainsLeft, p.hit);
-        }
 
         if (p.pierce <= 0) {
           projectiles.splice(i, 1);
@@ -1956,9 +2073,9 @@ function update(dt) {
         bossesDefeated++;
         // Queue boss-bonus pick-1-from-3 upgrade screen
         pendingBossUpgradeScreen = true;
-        // Queue legendary upgrade screen if any are still unlocked
-        if (!player.legendaries.chain || !player.legendaries.flame || !player.legendaries.ice) {
-          pendingLegendaryScreen = true;
+        // Queue weapon-unlock screen if any are still unowned
+        if (!player.weapons.scythe || !player.weapons.staff || !player.weapons.blackHole) {
+          pendingWeaponScreen = true;
         }
       } else {
         burst(e.x, e.y, e.color, 12, 4);
@@ -2110,9 +2227,9 @@ function update(dt) {
   if (pendingBossUpgradeScreen) {
     pendingBossUpgradeScreen = false;
     showBossUpgrade();
-  } else if (pendingLegendaryScreen) {
-    pendingLegendaryScreen = false;
-    showLegendaryUpgrade();
+  } else if (pendingWeaponScreen) {
+    pendingWeaponScreen = false;
+    showWeaponUpgrade();
   }
 }
 
@@ -2308,42 +2425,18 @@ function drawEnemy(e) {
 
 function drawProjectile(p) {
   ctx.save();
-  // Determine projectile color based on player's legendaries
-  // Priority: ice > flame > chain > default
-  let coreColor = '#ffd60a';   // default yellow
-  let glowColor = 'rgba(255, 214, 10, 0.8)';
-  let glowEdge  = 'rgba(255, 214, 10, 0)';
-  if (player && player.legendaries) {
-    if (player.legendaries.ice) {
-      coreColor = '#7dd3fc';
-      glowColor = 'rgba(125, 211, 252, 0.85)';
-      glowEdge  = 'rgba(125, 211, 252, 0)';
-    } else if (player.legendaries.flame) {
-      coreColor = '#fb923c';
-      glowColor = 'rgba(251, 146, 60, 0.85)';
-      glowEdge  = 'rgba(251, 146, 60, 0)';
-    } else if (player.legendaries.chain) {
-      coreColor = '#fde047';
-      glowColor = 'rgba(253, 224, 71, 0.9)';
-      glowEdge  = 'rgba(253, 224, 71, 0)';
-    }
-  }
+  // Default slingshot projectile (yellow)
+  const coreColor = '#ffd60a';
+  const glowColor = 'rgba(255, 214, 10, 0.8)';
+  const glowEdge  = 'rgba(255, 214, 10, 0)';
 
   // Trail glow
-  const glowR = (player && player.legendaries && player.legendaries.flame) ? 16 : 12;
+  const glowR = 12;
   const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
   glow.addColorStop(0, glowColor);
   glow.addColorStop(1, glowEdge);
   ctx.fillStyle = glow;
   ctx.fillRect(p.x - glowR, p.y - glowR, glowR * 2, glowR * 2);
-
-  // Flame trail particles (small)
-  if (player && player.legendaries && player.legendaries.flame) {
-    ctx.fillStyle = `rgba(251, 146, 60, ${0.4 + Math.random() * 0.3})`;
-    ctx.beginPath();
-    ctx.arc(p.x - p.vx * 0.4, p.y - p.vy * 0.4, p.r * 1.2, 0, Math.PI * 2);
-    ctx.fill();
-  }
 
   ctx.fillStyle = coreColor;
   ctx.beginPath();
@@ -2497,6 +2590,70 @@ function drawBossWarning() {
   ctx.restore();
 }
 
+function drawBlackHole(bh) {
+  ctx.save();
+  // Spin angle based on age
+  const spinAngle = (bh.age / 200);
+  const lifeFrac = Math.min(1, bh.age / 2000); // 0..1 over the pull window
+  // Outer pull glow (faintly visible at the pull radius)
+  const pullGlow = ctx.createRadialGradient(bh.x, bh.y, 8, bh.x, bh.y, bh.pullRadius);
+  pullGlow.addColorStop(0, 'rgba(168, 85, 247, 0.55)');
+  pullGlow.addColorStop(0.5, 'rgba(168, 85, 247, 0.18)');
+  pullGlow.addColorStop(1, 'rgba(168, 85, 247, 0)');
+  ctx.fillStyle = pullGlow;
+  ctx.fillRect(bh.x - bh.pullRadius, bh.y - bh.pullRadius, bh.pullRadius * 2, bh.pullRadius * 2);
+
+  // Inner dark core (grows slightly as it ages)
+  const coreR = 22 + lifeFrac * 10;
+  const core = ctx.createRadialGradient(bh.x, bh.y, 0, bh.x, bh.y, coreR);
+  core.addColorStop(0, 'rgba(0, 0, 0, 1)');
+  core.addColorStop(0.7, 'rgba(20, 0, 30, 0.95)');
+  core.addColorStop(1, 'rgba(168, 85, 247, 0.4)');
+  ctx.fillStyle = core;
+  ctx.beginPath();
+  ctx.arc(bh.x, bh.y, coreR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Spinning swirl arms (4 thin arcs)
+  ctx.translate(bh.x, bh.y);
+  ctx.rotate(spinAngle);
+  ctx.strokeStyle = 'rgba(192, 132, 252, 0.85)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.arc(0, 0, coreR + 6 + i * 3, (Math.PI / 2) * i, (Math.PI / 2) * i + Math.PI * 0.6);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawScytheEffect(s) {
+  const alpha = Math.max(0, s.life / s.maxLife);
+  const progress = 1 - alpha; // 0..1 — used for sweep angle
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(s.x, s.y);
+  ctx.rotate(progress * Math.PI * 2); // full spin over the lifetime
+  // Outer ring (radius pulse)
+  ctx.strokeStyle = 'rgba(255, 45, 117, 0.85)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, s.radius, 0, Math.PI * 2);
+  ctx.stroke();
+  // Sweeping arc (the "blade")
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(0, 0, s.radius - 4, -0.4, 0.4);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(255, 45, 117, 0.6)';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.arc(0, 0, s.radius - 4, -0.5, 0.5);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawParticle(p) {
   const alpha = Math.max(0, p.life / p.maxLife);
   ctx.save();
@@ -2540,12 +2697,16 @@ function render() {
   for (const g of gems) drawGem(g);
   for (const hp of healthPacks) drawHealthPack(hp);
   for (const mg of magnets) drawMagnet(mg);
+  // black holes — drawn under enemies so enemies appear "in" them
+  for (const bh of blackHoles) drawBlackHole(bh);
   // enemies
   for (const e of enemies) drawEnemy(e);
   // projectiles
   for (const p of projectiles) drawProjectile(p);
   // lightning arcs (chain lightning visual, drawn on top of projectiles)
   drawLightningArcs();
+  // scythe swing effects
+  for (const s of scytheEffects) drawScytheEffect(s);
   // player
   drawPlayer();
   // particles
@@ -2695,14 +2856,15 @@ function startGame() {
   }
   player = makePlayer();
   enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
+  blackHoles = []; scytheEffects = []; blackHoleSpawnTimer = 4000;
   timeMs = 0; kills = 0; wave = 1; waveTimer = 0; spawnTimer = 0;
   bossActive = false; bossWarning = 0; bossSpawnPending = false; lastBossWave = 0; bossesDefeated = 0;
-  pendingLegendaryScreen = false;
+  pendingWeaponScreen = false;
   pendingBossUpgradeScreen = false;
   runInProgress = true;
   hideAllOverlays();
   setIngameHUD(true);
-  refreshLegendariesPanel();
+  refreshWeaponsPanel();
   state = 'playing';
   lastFrame = performance.now();
 }
