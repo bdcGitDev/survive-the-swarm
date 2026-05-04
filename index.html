@@ -1383,6 +1383,7 @@ function makePlayer() {
     r: 14,
     speed: 1.5,
     hp: 100, maxHp: 100,
+    damageMult: 1,        // multiplier on incoming damage (lowered by Iron Hide upgrade)
     level: 1, xp: 0, xpToNext: 5,
     // weapon
     fireCooldown: 0,
@@ -1712,7 +1713,7 @@ const UPGRADES = [
   { id: 'multishot', icon: '🎯', name: 'Split Shot',       desc: '+1 projectile per shot',          apply: p => p.projCount += 1 },
   { id: 'pickup',    icon: '🧲', name: 'Magnet',           desc: '+50% XP pickup radius',           apply: p => p.pickupRadius *= 1.5 },
   { id: 'pierce',    icon: '🔱', name: 'Piercer',          desc: '+1 enemy pierce per projectile',  apply: p => p.projPierce += 1 },
-  { id: 'regen',     icon: '✨', name: 'Recovery',         desc: 'Heal 20 HP now',                  apply: p => { p.hp = Math.min(p.maxHp, p.hp + 20); } },
+  { id: 'defense',   icon: '🛡️', name: 'Iron Hide',         desc: '−15% damage taken',               apply: p => p.damageMult *= 0.85 },
 ];
 
 function pickUpgrades() {
@@ -2111,10 +2112,11 @@ function update(dt) {
     const pdx = player.x - e.x, pdy = player.y - e.y;
     if (Math.hypot(pdx, pdy) < e.r + player.r) {
       if (player.hurtFlash <= 0) {
-        if (!devMode.unlimitedHp) player.hp -= e.dmg;
+        const taken = Math.max(1, Math.round(e.dmg * player.damageMult));
+        if (!devMode.unlimitedHp) player.hp -= taken;
         player.hurtFlash = 600;
         burst(player.x, player.y, '#ff3b3b', 10, 3);
-        floatText(player.x, player.y - 20, `-${e.dmg}`, '#ff3b3b');
+        floatText(player.x, player.y - 20, `-${taken}`, '#ff3b3b');
         if (player.hp <= 0) {
           gameOver();
           return;
