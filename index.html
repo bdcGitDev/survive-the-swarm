@@ -2917,6 +2917,9 @@ document.getElementById('hub-records-btn').onclick = (e) => {
 document.getElementById('pause-resume-btn').onclick = togglePause;
 document.getElementById('pause-home-btn').onclick = pauseToHub;
 
+// Click anywhere on the battlefield (canvas) to pause / unpause
+document.getElementById('game').addEventListener('click', togglePause);
+
 // Game over buttons
 document.getElementById('restart-btn').onclick = startGame;
 document.getElementById('hub-return-btn').onclick = () => showHub('home');
