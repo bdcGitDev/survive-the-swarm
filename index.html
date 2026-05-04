@@ -1596,12 +1596,9 @@ function castStaff() {
 // WEAPON: BLACK HOLE — spawns at random spot, pulls then explodes
 // =============================================================
 function spawnBlackHole() {
-  // Random map position (with some margin from the edge)
-  const margin = 80;
-  const x = margin + Math.random() * (W - margin * 2);
-  const y = margin + Math.random() * (H - margin * 2);
+  // Spawns at the player's current position
   blackHoles.push({
-    x, y,
+    x: player.x, y: player.y,
     age: 0,
     exploded: false,
     pullRadius: 200,
