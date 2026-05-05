@@ -1389,6 +1389,35 @@
     margin-top: 24px;
   }
 
+  /* Skin detail modal — preview a locked or owned skin enlarged */
+  #skin-detail-modal { z-index: 550; }
+  .skin-detail-canvas {
+    width: 220px;
+    height: 220px;
+    margin-bottom: 12px;
+  }
+  .skin-detail-name {
+    font-family: 'Bungee', cursive;
+    font-size: 26px;
+    letter-spacing: 3px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .skin-detail-tier {
+    font-family: 'Bungee', cursive;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 12px currentColor;
+    margin-bottom: 8px;
+  }
+  .skin-detail-status {
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 22px;
+  }
+  .skin-detail-status.locked { color: #ff8a8a; }
+
   #game-over h1 {
     background: linear-gradient(90deg, var(--danger), var(--accent));
     -webkit-background-clip: text;
@@ -1720,6 +1749,18 @@
           <div class="coming-soon-item"><span class="item-name">💰 GEM MULTIPLIER</span>+10% gems earned per level</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Skin detail modal -->
+  <div class="overlay hidden" id="skin-detail-modal">
+    <canvas class="skin-detail-canvas" id="skin-detail-canvas" width="220" height="220"></canvas>
+    <div class="skin-detail-name" id="skin-detail-name">NINJA</div>
+    <div class="skin-detail-tier" id="skin-detail-tier">COMMON</div>
+    <div class="skin-detail-status" id="skin-detail-status">★ EQUIPPED ★</div>
+    <div class="reveal-buttons">
+      <button class="btn" id="skin-detail-equip-btn">EQUIP</button>
+      <button class="btn secondary" id="skin-detail-close-btn">BACK</button>
     </div>
   </div>
 
@@ -2562,34 +2603,55 @@ function refreshSkinsPage() {
     const tierLabel = skin.tier ? TIERS[skin.tier].name : 'STARTER';
     const tile = document.createElement('div');
     tile.className = `skin-tile ${tierClass} ${owned ? '' : 'locked'} ${equipped ? 'equipped' : ''}`;
+    const status = equipped ? '★ EQUIPPED ★' : (owned ? 'CLICK TO EQUIP' : '🔒 LOCKED');
     tile.innerHTML = `
       <canvas class="skin-tile-canvas" width="96" height="96"></canvas>
-      <div class="skin-tile-name">${owned ? skin.name : '???'}</div>
+      <div class="skin-tile-name">${skin.name}</div>
       <div class="skin-tile-tier ${tierClass}">${tierLabel}</div>
-      <div class="skin-tile-status">${equipped ? '★ EQUIPPED ★' : (owned ? 'CLICK TO EQUIP' : '🔒 LOCKED')}</div>
+      <div class="skin-tile-status">${status}</div>
     `;
     grid.appendChild(tile);
-    const canvas = tile.querySelector('canvas');
-    if (owned) {
-      drawSkinPreview(canvas, skin.id, 2.6);
+    // Always render the real skin — locked tiles dim via the .locked CSS opacity.
+    drawSkinPreview(tile.querySelector('canvas'), skin.id, 2.6);
+    // Owned-not-equipped tiles equip directly; locked or already-equipped open the detail modal.
+    if (owned && !equipped) {
       tile.addEventListener('click', () => equipSkin(skin.id));
     } else {
-      // Locked: silhouette in tier color
-      const c = canvas.getContext('2d');
-      c.save();
-      c.translate(canvas.width / 2, canvas.height / 2);
-      c.fillStyle = TIERS[skin.tier].color;
-      c.globalAlpha = 0.18;
-      c.beginPath(); c.arc(0, 0, 32, 0, Math.PI * 2); c.fill();
-      c.globalAlpha = 0.55;
-      c.fillStyle = TIERS[skin.tier].color;
-      c.font = 'bold 30px "Bungee", cursive';
-      c.textAlign = 'center';
-      c.textBaseline = 'middle';
-      c.fillText('?', 0, 2);
-      c.restore();
+      tile.addEventListener('click', () => showSkinDetail(skin.id));
     }
   }
+}
+
+function showSkinDetail(skinId) {
+  const skin = getSkinData(skinId);
+  const owned = ownedSkins.includes(skinId);
+  const equipped = equippedSkin === skinId;
+  const tierInfo = skin.tier ? TIERS[skin.tier] : null;
+  const tierLabel = tierInfo ? tierInfo.name : 'STARTER';
+  const tierColor = tierInfo ? tierInfo.color : '#ffffff';
+
+  document.getElementById('skin-detail-name').textContent = skin.name.toUpperCase();
+  const tierEl = document.getElementById('skin-detail-tier');
+  tierEl.textContent = tierLabel;
+  tierEl.style.color = tierColor;
+
+  const statusEl = document.getElementById('skin-detail-status');
+  statusEl.classList.toggle('locked', !owned);
+  if (!owned) statusEl.textContent = '🔒 LOCKED — Get from Mystery Box';
+  else if (equipped) statusEl.textContent = '★ CURRENTLY EQUIPPED ★';
+  else statusEl.textContent = 'CLICK EQUIP TO USE THIS SKIN';
+
+  const equipBtn = document.getElementById('skin-detail-equip-btn');
+  // Hide the equip button when locked or already equipped
+  equipBtn.style.display = (owned && !equipped) ? '' : 'none';
+  equipBtn.dataset.skin = skinId;
+
+  drawSkinPreview(document.getElementById('skin-detail-canvas'), skinId, 4.5);
+  document.getElementById('skin-detail-modal').classList.remove('hidden');
+}
+
+function closeSkinDetail() {
+  document.getElementById('skin-detail-modal').classList.add('hidden');
 }
 
 // =============================================================
@@ -4408,6 +4470,12 @@ document.getElementById('reveal-equip-btn').addEventListener('click', () => {
   closeReveal();
 });
 document.getElementById('reveal-back-btn').addEventListener('click', closeReveal);
+document.getElementById('skin-detail-equip-btn').addEventListener('click', () => {
+  const id = document.getElementById('skin-detail-equip-btn').dataset.skin;
+  if (id) equipSkin(id);
+  closeSkinDetail();
+});
+document.getElementById('skin-detail-close-btn').addEventListener('click', closeSkinDetail);
 
 // Side-panel tab switching (STATS / UPGRADES)
 document.querySelectorAll('.panel-tab').forEach(btn => {
