@@ -1188,6 +1188,207 @@
   }
   .cards-library .card-tile.equipped .tile-status { color: #84f0ff; }
 
+  /* === SKINS HUB TAB === */
+  .skins-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 760px;
+    margin: 0 auto 20px;
+    padding: 0 12px;
+  }
+  .skins-shards {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: rgba(132, 240, 255, 0.08);
+    border: 1px solid rgba(132, 240, 255, 0.3);
+    border-radius: 4px;
+    font-family: 'Bungee', cursive;
+    font-size: 12px;
+    color: #84f0ff;
+    letter-spacing: 1.5px;
+  }
+  .skins-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .skin-tile {
+    border: 2px solid rgba(132, 240, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(10, 6, 18, 0.85);
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    text-align: center;
+    position: relative;
+  }
+  .skin-tile:hover { transform: translateY(-3px); }
+  .skin-tile.locked {
+    opacity: 0.55;
+    cursor: default;
+  }
+  .skin-tile.locked:hover { transform: none; }
+  .skin-tile.equipped {
+    box-shadow: 0 0 18px rgba(132, 240, 255, 0.5);
+  }
+  .skin-tile-canvas {
+    display: block;
+    margin: 0 auto 10px;
+    width: 96px;
+    height: 96px;
+  }
+  .skin-tile-name {
+    font-family: 'Bungee', cursive;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .skin-tile-tier {
+    font-family: 'Bungee', cursive;
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .skin-tile-status {
+    margin-top: 8px;
+    font-family: 'Bungee', cursive;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+  }
+  .skin-tile.equipped .skin-tile-status { color: #84f0ff; }
+  .tier-common    { color: #ffffff; border-color: rgba(255, 255, 255, 0.5) !important; }
+  .tier-rare      { color: #5db9f3; border-color: rgba(93, 185, 243, 0.6) !important; }
+  .tier-epic      { color: #a855f7; border-color: rgba(168, 85, 247, 0.6) !important; }
+  .tier-legendary { color: #ffd60a; border-color: rgba(255, 214, 10, 0.6) !important; }
+
+  /* === SHOP — mystery box card === */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 12px;
+  }
+  .shop-card {
+    border: 2px solid rgba(255, 214, 10, 0.4);
+    border-radius: 10px;
+    background: rgba(10, 6, 18, 0.88);
+    padding: 18px 16px;
+    text-align: center;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .shop-card.buyable { cursor: pointer; }
+  .shop-card.buyable:hover {
+    transform: translateY(-3px);
+    border-color: #ffd60a;
+    box-shadow: 0 0 18px rgba(255, 214, 10, 0.3);
+  }
+  .shop-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .shop-card-icon { font-size: 56px; line-height: 1; margin-bottom: 8px; }
+  .shop-card-name {
+    font-family: 'Bungee', cursive;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #ffd60a;
+    margin-bottom: 6px;
+  }
+  .shop-card-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  .shop-card-price {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    background: rgba(255, 214, 10, 0.12);
+    border: 1px solid rgba(255, 214, 10, 0.5);
+    border-radius: 4px;
+    font-family: 'Bungee', cursive;
+    font-size: 12px;
+    color: #ffd60a;
+    letter-spacing: 1.5px;
+  }
+
+  /* === MYSTERY BOX REVEAL MODAL === */
+  #reveal-modal { z-index: 600; }
+  .reveal-stage {
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+  }
+  .reveal-box {
+    font-size: 110px;
+    line-height: 1;
+    animation: revealPulse 700ms ease-in-out infinite;
+    filter: drop-shadow(0 0 18px rgba(255, 214, 10, 0.6));
+  }
+  @keyframes revealPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+  .reveal-explode {
+    animation: revealExplode 280ms ease-out forwards !important;
+  }
+  @keyframes revealExplode {
+    0%   { transform: scale(1); opacity: 1; }
+    60%  { transform: scale(1.6); opacity: 0.8; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+  .reveal-skin-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: revealAppear 380ms ease-out;
+  }
+  @keyframes revealAppear {
+    0%   { transform: scale(0.2); opacity: 0; }
+    70%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .reveal-canvas {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+  }
+  .reveal-tier {
+    font-family: 'Bungee', cursive;
+    font-size: 14px;
+    letter-spacing: 4px;
+    margin-top: 14px;
+    text-shadow: 0 0 14px currentColor;
+  }
+  .reveal-name {
+    font-family: 'Bungee', cursive;
+    font-size: 28px;
+    letter-spacing: 3px;
+    margin-top: 10px;
+    color: var(--text);
+  }
+  .reveal-status {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+  .reveal-buttons {
+    display: flex;
+    gap: 14px;
+    margin-top: 24px;
+  }
+
   #game-over h1 {
     background: linear-gradient(90deg, var(--danger), var(--accent));
     -webkit-background-clip: text;
@@ -1456,6 +1657,7 @@
     <div class="hub-tabs">
       <button class="hub-tab active" data-tab="home"><span class="tab-icon">🏠</span> HOME</button>
       <button class="hub-tab" data-tab="cards"><span class="tab-icon">🃏</span> CARDS</button>
+      <button class="hub-tab" data-tab="skins"><span class="tab-icon">🎭</span> SKINS</button>
       <button class="hub-tab" data-tab="shop"><span class="tab-icon">🛒</span> SHOP</button>
       <button class="hub-tab" data-tab="upgrades"><span class="tab-icon">⚡</span> UPGRADES</button>
     </div>
@@ -1463,17 +1665,7 @@
     <!-- HOME PAGE -->
     <div class="hub-page home-page active" id="page-home">
       <div class="character-stage">
-        <svg class="character-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="charGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.6"/>
-              <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <circle cx="60" cy="60" r="55" fill="url(#charGlow)"/>
-          <circle cx="60" cy="60" r="28" fill="#00f0ff" stroke="#ffffff" stroke-width="3"/>
-          <circle cx="60" cy="60" r="11" fill="#ffffff"/>
-        </svg>
+        <canvas id="home-skin-canvas" width="120" height="120" style="display:block;"></canvas>
       </div>
       <div class="home-action" id="home-action">
         <div class="resume-tag">★ RUN IN PROGRESS ★</div>
@@ -1484,19 +1676,24 @@
     </div>
 
     <!-- SHOP PAGE -->
-    <div class="hub-page" id="page-shop">
-      <div class="placeholder-card">
-        <div class="lock-icon">🛒</div>
-        <h3>SHOP COMING SOON</h3>
-        <p>Spend your hard-earned gems on cosmetics, characters, and consumables that change how each run starts.</p>
-        <p style="font-size:11px; opacity:0.7;">Keep grinding — your gems will be waiting when the shop opens.</p>
-        <div class="coming-soon-list">
-          <div class="coming-soon-item"><span class="item-name">🎭 NEW CHARACTERS</span>Different starting builds and visuals</div>
-          <div class="coming-soon-item"><span class="item-name">🗡️ NEW WEAPONS</span>Knives, fireballs, boomerangs</div>
-          <div class="coming-soon-item"><span class="item-name">🎨 SKINS</span>Cosmetic palettes for your character</div>
-          <div class="coming-soon-item"><span class="item-name">🎲 MYSTERY BOX</span>Random rare unlocks</div>
+    <div class="hub-page" id="page-shop" style="overflow-y:auto; padding: 28px 24px;">
+      <div class="shop-grid" id="shop-grid">
+        <div class="shop-card buyable" id="shop-mystery-box">
+          <div class="shop-card-icon">🎁</div>
+          <div class="shop-card-name">MYSTERY BOX</div>
+          <div class="shop-card-desc">Open a random skin. Common 70%, Rare 20%, Epic 9%, Legendary 1%. Duplicates become 1 shard.</div>
+          <div class="shop-card-price">💎 20 GEMS</div>
         </div>
       </div>
+    </div>
+
+    <!-- SKINS PAGE -->
+    <div class="hub-page" id="page-skins" style="overflow-y:auto; padding: 28px 24px;">
+      <div class="skins-header">
+        <h3 class="cards-library-title" style="margin:0;">YOUR COLLECTION</h3>
+        <div class="skins-shards">💎 SHARDS · <span id="skins-shard-count">0</span></div>
+      </div>
+      <div class="skins-grid" id="skins-grid"></div>
     </div>
 
     <!-- CARDS PAGE -->
@@ -1523,6 +1720,23 @@
           <div class="coming-soon-item"><span class="item-name">💰 GEM MULTIPLIER</span>+10% gems earned per level</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Mystery box reveal modal -->
+  <div class="overlay hidden" id="reveal-modal">
+    <div class="reveal-stage">
+      <div class="reveal-box" id="reveal-box">🎁</div>
+      <div id="reveal-skin-wrap" style="display:none;" class="reveal-skin-wrap">
+        <canvas class="reveal-canvas" id="reveal-canvas" width="180" height="180"></canvas>
+      </div>
+    </div>
+    <div class="reveal-tier" id="reveal-tier" style="display:none;">COMMON</div>
+    <div class="reveal-name" id="reveal-name" style="display:none;">★ NINJA ★</div>
+    <div class="reveal-status" id="reveal-status" style="display:none;">— New skin unlocked! —</div>
+    <div class="reveal-buttons" id="reveal-buttons" style="display:none;">
+      <button class="btn" id="reveal-equip-btn">EQUIP NOW</button>
+      <button class="btn secondary" id="reveal-back-btn">BACK TO SHOP</button>
     </div>
   </div>
 
@@ -2041,6 +2255,342 @@ const UPGRADES = [
   { id: 'pierce',    icon: '🔱', name: 'Piercer',          desc: '+1 enemy pierce per projectile',  apply: p => p.projPierce += 1 },
   { id: 'defense',   icon: '🛡️', name: 'Iron Hide',         desc: '−15% damage taken',               apply: p => p.damageMult *= 0.85 },
 ];
+
+// =============================================================
+// SKINS — cosmetic player visuals, acquired from mystery boxes
+// =============================================================
+const SKINS = [
+  { id: 'default',  name: 'Default',  tier: null,        unlocked: true  },
+  { id: 'ninja',    name: 'Ninja',    tier: 'common'                     },
+  { id: 'vampire',  name: 'Vampire',  tier: 'rare'                       },
+  { id: 'dragon',   name: 'Dragon',   tier: 'epic'                       },
+];
+
+const TIERS = {
+  common:    { name: 'COMMON',    color: '#ffffff', glow: '255,255,255', weight: 70 },
+  rare:      { name: 'RARE',      color: '#5db9f3', glow: '93,185,243',  weight: 20 },
+  epic:      { name: 'EPIC',      color: '#a855f7', glow: '168,85,247',  weight: 9  },
+  legendary: { name: 'LEGENDARY', color: '#ffd60a', glow: '255,214,10',  weight: 1  },
+};
+const TIER_FALLBACK = ['legendary', 'epic', 'rare', 'common']; // walk down if no skins at the rolled tier
+const MYSTERY_BOX_COST = 20;
+
+let ownedSkins = ['default'];
+let equippedSkin = 'default';
+let skinShards = 0;
+
+function loadSkinState() {
+  try {
+    const raw = localStorage.getItem('sts_skins');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.owned)) {
+      ownedSkins = data.owned.filter(id => SKINS.find(s => s.id === id));
+      if (!ownedSkins.includes('default')) ownedSkins.unshift('default');
+    }
+    if (data.equipped && SKINS.find(s => s.id === data.equipped) && ownedSkins.includes(data.equipped)) {
+      equippedSkin = data.equipped;
+    }
+    if (typeof data.shards === 'number') skinShards = Math.max(0, Math.floor(data.shards));
+  } catch {}
+}
+function saveSkinState() {
+  try {
+    localStorage.setItem('sts_skins', JSON.stringify({
+      owned: ownedSkins, equipped: equippedSkin, shards: skinShards,
+    }));
+  } catch {}
+}
+
+function getSkinData(id) { return SKINS.find(s => s.id === id) || SKINS[0]; }
+
+// Per-skin draw functions. All take (x, y, r, flash) where flash=true means
+// render the body white (used by the in-game hurtFlash). Drawn in canvas/world coords.
+const skinDraw = {
+  default(ctx, x, y, r, flash) {
+    const glow = ctx.createRadialGradient(x, y, 4, x, y, r + 16);
+    glow.addColorStop(0, 'rgba(0, 240, 255, 0.5)');
+    glow.addColorStop(1, 'rgba(0, 240, 255, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - r - 16, y - r - 16, (r + 16) * 2, (r + 16) * 2);
+    ctx.fillStyle = flash ? '#ffffff' : '#00f0ff';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(x, y, r * 0.4, 0, Math.PI * 2); ctx.fill();
+  },
+  ninja(ctx, x, y, r, flash) {
+    // Crossed swords behind body (X pattern)
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.lineCap = 'round';
+    // Sword blades
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 2.6;
+    const reach = r + 5;
+    ctx.beginPath(); ctx.moveTo(-reach, -reach); ctx.lineTo(reach, reach); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(reach, -reach); ctx.lineTo(-reach, reach); ctx.stroke();
+    // Sword hilts (one end of each)
+    ctx.fillStyle = '#3b3b3b';
+    ctx.beginPath(); ctx.arc(-reach, -reach, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(reach, -reach, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // Subtle red glow
+    const glow = ctx.createRadialGradient(x, y, 4, x, y, r + 16);
+    glow.addColorStop(0, 'rgba(220, 38, 38, 0.35)');
+    glow.addColorStop(1, 'rgba(220, 38, 38, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - r - 16, y - r - 16, (r + 16) * 2, (r + 16) * 2);
+    // Body
+    ctx.fillStyle = flash ? '#ffffff' : '#1a1a2e';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2; ctx.stroke();
+    // Red headband across the middle
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(x - r, y - 2, r * 2, 4);
+  },
+  vampire(ctx, x, y, r, flash) {
+    // Cape stub behind (trapezoid)
+    ctx.save();
+    ctx.fillStyle = '#0a0a14';
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.95, y);
+    ctx.lineTo(x + r * 0.95, y);
+    ctx.lineTo(x + r * 0.7, y + r * 1.3);
+    ctx.lineTo(x - r * 0.7, y + r * 1.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    // Dark red glow
+    const glow = ctx.createRadialGradient(x, y, 4, x, y, r + 16);
+    glow.addColorStop(0, 'rgba(180, 30, 60, 0.5)');
+    glow.addColorStop(1, 'rgba(180, 30, 60, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - r - 16, y - r - 16, (r + 16) * 2, (r + 16) * 2);
+    // Body
+    ctx.fillStyle = flash ? '#ffffff' : '#7a0d1d';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#3d0610'; ctx.lineWidth = 2; ctx.stroke();
+    // Two small white fangs at the bottom
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y + r - 4); ctx.lineTo(x - 6, y + r + 1); ctx.lineTo(x - 2, y + r - 3); ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + r - 4); ctx.lineTo(x + 6, y + r + 1); ctx.lineTo(x + 2, y + r - 3); ctx.closePath();
+    ctx.fill();
+  },
+  dragon(ctx, x, y, r, flash) {
+    // Wings on sides
+    ctx.save();
+    ctx.fillStyle = '#a06400';
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.8, y - 2); ctx.lineTo(x - r * 1.7, y - r * 0.5);
+    ctx.lineTo(x - r * 1.6, y + r * 0.4); ctx.lineTo(x - r * 0.7, y + 2);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + r * 0.8, y - 2); ctx.lineTo(x + r * 1.7, y - r * 0.5);
+    ctx.lineTo(x + r * 1.6, y + r * 0.4); ctx.lineTo(x + r * 0.7, y + 2);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // Golden glow
+    const glow = ctx.createRadialGradient(x, y, 4, x, y, r + 18);
+    glow.addColorStop(0, 'rgba(255, 170, 50, 0.55)');
+    glow.addColorStop(1, 'rgba(255, 170, 50, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - r - 18, y - r - 18, (r + 18) * 2, (r + 18) * 2);
+    // Body
+    ctx.fillStyle = flash ? '#ffffff' : '#d4a017';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7a5a00'; ctx.lineWidth = 2; ctx.stroke();
+    // Scale dots
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
+    const dots = [[-3,-4],[3,-4],[0,0],[-5,3],[5,3],[-2,6],[3,6]];
+    for (const [dx, dy] of dots) {
+      ctx.beginPath(); ctx.arc(x + dx, y + dy, 1.4, 0, Math.PI * 2); ctx.fill();
+    }
+    // Single horn on top
+    ctx.fillStyle = '#fff5dd';
+    ctx.beginPath();
+    ctx.moveTo(x - 3, y - r); ctx.lineTo(x, y - r - 7); ctx.lineTo(x + 3, y - r); ctx.closePath();
+    ctx.fill();
+  },
+};
+
+// Draw a skin to a small offscreen / preview canvas at a chosen scale.
+function drawSkinPreview(canvas, skinId, scale = 3) {
+  const c = canvas.getContext('2d');
+  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.save();
+  // Center; scale up so the 14px-radius player fills nicely.
+  c.translate(canvas.width / 2, canvas.height / 2);
+  c.scale(scale, scale);
+  const fn = skinDraw[skinId] || skinDraw.default;
+  fn(c, 0, 0, 14, false);
+  c.restore();
+}
+
+// Mystery box: roll a tier (with fallback) and pick a random skin in it.
+function rollMysteryBox() {
+  const r = Math.random() * 100;
+  let acc = 0;
+  let rolledTier = 'common';
+  for (const t of ['common', 'rare', 'epic', 'legendary']) {
+    acc += TIERS[t].weight;
+    if (r < acc) { rolledTier = t; break; }
+  }
+  // Walk down to a tier that actually has skins.
+  let tier = rolledTier;
+  let skinPool = SKINS.filter(s => s.tier === tier);
+  while (skinPool.length === 0) {
+    const idx = TIER_FALLBACK.indexOf(tier);
+    if (idx === TIER_FALLBACK.length - 1) break;
+    tier = TIER_FALLBACK[idx + 1];
+    skinPool = SKINS.filter(s => s.tier === tier);
+  }
+  if (skinPool.length === 0) return null;
+  const picked = skinPool[Math.floor(Math.random() * skinPool.length)];
+  return { skin: picked, tier };
+}
+
+function buyMysteryBox() {
+  const rec = loadRecords();
+  if ((rec.gems || 0) < MYSTERY_BOX_COST) return;
+  rec.gems -= MYSTERY_BOX_COST;
+  saveRecords(rec);
+  const result = rollMysteryBox();
+  if (!result) return;
+  const isDuplicate = ownedSkins.includes(result.skin.id);
+  if (isDuplicate) {
+    skinShards += 1;
+  } else {
+    ownedSkins.push(result.skin.id);
+  }
+  saveSkinState();
+  // Refresh hub UI (gem balance) and the open page underneath.
+  refreshHubUI();
+  refreshShopPage();
+  refreshSkinsPage();
+  showSkinReveal(result.skin.id, result.tier, isDuplicate);
+}
+
+function showSkinReveal(skinId, tier, isDuplicate) {
+  const skin = getSkinData(skinId);
+  const tierInfo = TIERS[tier] || TIERS.common;
+  const modal = document.getElementById('reveal-modal');
+  const box = document.getElementById('reveal-box');
+  const skinWrap = document.getElementById('reveal-skin-wrap');
+  const tierEl = document.getElementById('reveal-tier');
+  const nameEl = document.getElementById('reveal-name');
+  const statusEl = document.getElementById('reveal-status');
+  const buttonsEl = document.getElementById('reveal-buttons');
+  const equipBtn = document.getElementById('reveal-equip-btn');
+
+  // Reset visuals to phase 1
+  box.style.display = 'block';
+  box.classList.remove('reveal-explode');
+  skinWrap.style.display = 'none';
+  tierEl.style.display = 'none';
+  nameEl.style.display = 'none';
+  statusEl.style.display = 'none';
+  buttonsEl.style.display = 'none';
+
+  modal.classList.remove('hidden');
+
+  // Phase 1: pulse for 800ms, then explode
+  setTimeout(() => {
+    box.classList.add('reveal-explode');
+  }, 800);
+  // Phase 2: reveal at 1080ms
+  setTimeout(() => {
+    box.style.display = 'none';
+    skinWrap.style.display = 'flex';
+    drawSkinPreview(document.getElementById('reveal-canvas'), skinId, 4);
+    tierEl.textContent = tierInfo.name;
+    tierEl.style.color = tierInfo.color;
+    tierEl.style.display = 'block';
+    nameEl.textContent = `★ ${skin.name.toUpperCase()} ★`;
+    nameEl.style.display = 'block';
+    statusEl.textContent = isDuplicate
+      ? `— Duplicate · +1 SHARD (${skinShards} total) —`
+      : '— New skin unlocked! —';
+    statusEl.style.display = 'block';
+    buttonsEl.style.display = 'flex';
+    // Hide the equip button on duplicates (already owned, possibly already equipped).
+    equipBtn.style.display = isDuplicate ? 'none' : '';
+    equipBtn.dataset.skin = skinId;
+  }, 1080);
+}
+
+function closeReveal() {
+  document.getElementById('reveal-modal').classList.add('hidden');
+}
+
+function equipSkin(skinId) {
+  if (!ownedSkins.includes(skinId)) return;
+  equippedSkin = skinId;
+  saveSkinState();
+  refreshSkinsPage();
+  refreshHomeSkin();
+  // If a run is in progress, the in-game player will pick up the change next render via drawPlayer.
+}
+
+function refreshHomeSkin() {
+  const c = document.getElementById('home-skin-canvas');
+  if (c) drawSkinPreview(c, equippedSkin, 3.2);
+}
+
+function refreshShopPage() {
+  const card = document.getElementById('shop-mystery-box');
+  if (!card) return;
+  const rec = loadRecords();
+  const canAfford = (rec.gems || 0) >= MYSTERY_BOX_COST;
+  card.classList.toggle('disabled', !canAfford);
+  card.classList.toggle('buyable', canAfford);
+}
+
+function refreshSkinsPage() {
+  const grid = document.getElementById('skins-grid');
+  const shardEl = document.getElementById('skins-shard-count');
+  if (!grid) return;
+  if (shardEl) shardEl.textContent = skinShards;
+  grid.innerHTML = '';
+  for (const skin of SKINS) {
+    const owned = ownedSkins.includes(skin.id);
+    const equipped = equippedSkin === skin.id;
+    const tierClass = skin.tier ? `tier-${skin.tier}` : '';
+    const tierLabel = skin.tier ? TIERS[skin.tier].name : 'STARTER';
+    const tile = document.createElement('div');
+    tile.className = `skin-tile ${tierClass} ${owned ? '' : 'locked'} ${equipped ? 'equipped' : ''}`;
+    tile.innerHTML = `
+      <canvas class="skin-tile-canvas" width="96" height="96"></canvas>
+      <div class="skin-tile-name">${owned ? skin.name : '???'}</div>
+      <div class="skin-tile-tier ${tierClass}">${tierLabel}</div>
+      <div class="skin-tile-status">${equipped ? '★ EQUIPPED ★' : (owned ? 'CLICK TO EQUIP' : '🔒 LOCKED')}</div>
+    `;
+    grid.appendChild(tile);
+    const canvas = tile.querySelector('canvas');
+    if (owned) {
+      drawSkinPreview(canvas, skin.id, 2.6);
+      tile.addEventListener('click', () => equipSkin(skin.id));
+    } else {
+      // Locked: silhouette in tier color
+      const c = canvas.getContext('2d');
+      c.save();
+      c.translate(canvas.width / 2, canvas.height / 2);
+      c.fillStyle = TIERS[skin.tier].color;
+      c.globalAlpha = 0.18;
+      c.beginPath(); c.arc(0, 0, 32, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 0.55;
+      c.fillStyle = TIERS[skin.tier].color;
+      c.font = 'bold 30px "Bungee", cursive';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText('?', 0, 2);
+      c.restore();
+    }
+  }
+}
 
 // =============================================================
 // CARDS — passive abilities, equipped in 3 slots, persisted in localStorage
@@ -2966,7 +3516,7 @@ function drawWorldBounds() {
 
 function drawPlayer() {
   ctx.save();
-  // Pickup radius (faint)
+  // Pickup radius (faint, universal across skins)
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.pickupRadius, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(124, 255, 178, 0.04)';
@@ -2975,29 +3525,12 @@ function drawPlayer() {
   ctx.setLineDash([4, 6]);
   ctx.stroke();
   ctx.setLineDash([]);
-
-  // Glow
-  const glow = ctx.createRadialGradient(player.x, player.y, 4, player.x, player.y, 30);
-  glow.addColorStop(0, 'rgba(0, 240, 255, 0.5)');
-  glow.addColorStop(1, 'rgba(0, 240, 255, 0)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(player.x - 30, player.y - 30, 60, 60);
-
-  // Body
+  ctx.restore();
+  // Body — dispatch to the equipped skin's draw function
   const flash = player.hurtFlash > 0 && (Math.floor(player.hurtFlash / 60) % 2 === 0);
-  ctx.fillStyle = flash ? '#ffffff' : '#00f0ff';
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Inner core
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.r * 0.4, 0, Math.PI * 2);
-  ctx.fill();
+  const fn = skinDraw[equippedSkin] || skinDraw.default;
+  ctx.save();
+  fn(ctx, player.x, player.y, player.r, flash);
   ctx.restore();
 }
 
@@ -3564,6 +4097,8 @@ function setHubTab(tabName) {
     p.classList.toggle('active', p.id === 'page-' + tabName);
   });
   if (tabName === 'cards') refreshCardsPage();
+  if (tabName === 'skins') refreshSkinsPage();
+  if (tabName === 'shop')  refreshShopPage();
 }
 
 function showHub(tab) {
@@ -3580,6 +4115,8 @@ function showHub(tab) {
 function refreshHubUI() {
   const rec = loadRecords();
   document.getElementById('hub-gems').textContent = (rec.gems || 0).toLocaleString();
+  refreshHomeSkin();
+  refreshShopPage();
   // Update the home action area for start vs resume
   const homeAction = document.getElementById('home-action');
   const playBtn = document.getElementById('hub-play-btn');
@@ -3856,8 +4393,21 @@ document.getElementById('game').addEventListener('click', togglePause);
 document.getElementById('restart-btn').onclick = startGame;
 document.getElementById('hub-return-btn').onclick = () => showHub('home');
 
-// Load saved card loadout (if any) before showing the hub.
+// Load saved card loadout and skin state before showing the hub.
 loadEquippedCards();
+loadSkinState();
+
+// Mystery box buy + reveal modal buttons
+document.getElementById('shop-mystery-box').addEventListener('click', () => {
+  if (document.getElementById('shop-mystery-box').classList.contains('disabled')) return;
+  buyMysteryBox();
+});
+document.getElementById('reveal-equip-btn').addEventListener('click', () => {
+  const id = document.getElementById('reveal-equip-btn').dataset.skin;
+  if (id) equipSkin(id);
+  closeReveal();
+});
+document.getElementById('reveal-back-btn').addEventListener('click', closeReveal);
 
 // Side-panel tab switching (STATS / UPGRADES)
 document.querySelectorAll('.panel-tab').forEach(btn => {
