@@ -1256,6 +1256,10 @@
       <div class="label">TIME</div>
       <div class="value" id="time-val">0:00</div>
     </div>
+    <div class="stat" id="coins-stat">
+      <div class="label">COINS</div>
+      <div class="value" id="coins-val" style="color:#ffd60a;text-shadow:0 0 12px rgba(255,214,10,0.6);">0</div>
+    </div>
     <div class="stat" id="kills">
       <div class="label">KILLS</div>
       <div class="value" id="kills-val">0</div>
@@ -1516,7 +1520,8 @@ const SCYTHE_RATE = 1000;     // ms between scythe swings
 const BLACK_HOLE_RATE = 4000; // ms between black hole spawns
 
 // Entities
-let player, enemies = [], projectiles = [], gems = [], healthPacks = [], magnets = [], particles = [], floatingTexts = [];
+let player, enemies = [], projectiles = [], gems = [], coinDrops = [], healthPacks = [], magnets = [], particles = [], floatingTexts = [];
+let coins = 0; // in-run currency, resets each run
 
 // Boss state
 let bossActive = false;
@@ -1894,6 +1899,10 @@ function floatText(x, y, text, color = '#fff') {
 // =============================================================
 function dropGem(x, y, value = 1) {
   gems.push({ x, y, r: 5, value, life: 30000, attractSpeed: 0 });
+}
+
+function dropCoin(x, y) {
+  coinDrops.push({ x, y, r: 5, life: 30000, attractSpeed: 0 });
 }
 
 function dropHealthPack(x, y) {
@@ -2517,10 +2526,11 @@ function update(dt) {
     // Death
     if (e.hp <= 0) {
       if (e.isBoss) {
-        // Boss death: huge particles, guaranteed pack, lots of XP
+        // Boss death: huge particles, guaranteed pack, lots of XP, 1 guaranteed coin
         burst(e.x, e.y, e.color, 40, 6);
         burst(e.x, e.y, '#ffd60a', 30, 5);
         for (let g = 0; g < 8; g++) dropGem(e.x + (Math.random()-0.5)*40, e.y + (Math.random()-0.5)*40, 5);
+        dropCoin(e.x, e.y);
         dropHealthPack(e.x, e.y);
         floatText(e.x, e.y - 30, 'BOSS DEFEATED!', '#ffd60a');
         bossActive = false;
@@ -2534,6 +2544,8 @@ function update(dt) {
       } else {
         burst(e.x, e.y, e.color, 12, 4);
         dropGem(e.x, e.y, e.type === 'tank' ? 3 : 1);
+        // 3% chance to drop a coin
+        if (Math.random() < 0.03) dropCoin(e.x, e.y);
         // 4% chance to drop a health pack
         if (Math.random() < 0.04) dropHealthPack(e.x, e.y);
         // 0.7% chance to drop a magnet
@@ -2610,6 +2622,26 @@ function update(dt) {
     }
   }
 
+  // --- Coins (mirror gems: attract within pickup radius, despawn at 30s) ---
+  for (let i = coinDrops.length - 1; i >= 0; i--) {
+    const c = coinDrops[i];
+    c.life -= dt;
+    if (c.life <= 0) { coinDrops.splice(i, 1); continue; }
+    const dx = player.x - c.x, dy = player.y - c.y;
+    const d = Math.hypot(dx, dy);
+    if (c.forceVacuum || d < player.pickupRadius) {
+      if (!c.forceVacuum) {
+        c.attractSpeed = Math.min(c.attractSpeed + 0.4, 8);
+      }
+      c.x += (dx / (d || 1)) * c.attractSpeed;
+      c.y += (dy / (d || 1)) * c.attractSpeed;
+    }
+    if (d < player.r + c.r) {
+      coins++;
+      coinDrops.splice(i, 1);
+    }
+  }
+
   // --- Health Packs (persistent — no despawn) ---
   for (let i = healthPacks.length - 1; i >= 0; i--) {
     const hp = healthPacks[i];
@@ -2641,10 +2673,14 @@ function update(dt) {
       mg.y += (dy / (d || 1)) * mg.attractSpeed;
     }
     if (d < player.r + mg.r) {
-      // VACUUM EFFECT — force every gem on the field to high-speed attraction
+      // VACUUM EFFECT — force every gem and coin on the field to high-speed attraction
       for (const g of gems) {
         g.attractSpeed = 14;       // way above the normal cap of 8
         g.forceVacuum = true;      // flag so the gem loop ignores the radius check
+      }
+      for (const c of coinDrops) {
+        c.attractSpeed = 14;
+        c.forceVacuum = true;
       }
       // Visual feedback
       floatText(player.x, player.y - 24, 'VACUUM!', '#c084fc');
@@ -2970,6 +3006,23 @@ function drawGem(g) {
   ctx.restore();
 }
 
+function drawCoin(c) {
+  ctx.save();
+  const pulse = 1 + Math.sin(timeMs / 200) * 0.15;
+  // yellow glow
+  const glow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 14);
+  glow.addColorStop(0, 'rgba(255, 214, 10, 0.65)');
+  glow.addColorStop(1, 'rgba(255, 214, 10, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(c.x - 14, c.y - 14, 28, 28);
+
+  ctx.fillStyle = '#ffd60a';
+  ctx.translate(c.x, c.y);
+  ctx.rotate(Math.PI / 4);
+  ctx.fillRect(-c.r * pulse, -c.r * pulse, c.r * 2 * pulse, c.r * 2 * pulse);
+  ctx.restore();
+}
+
 function drawHealthPack(hp) {
   ctx.save();
   const pulse = 1 + Math.sin(timeMs / 180) * 0.12;
@@ -3185,8 +3238,9 @@ function render() {
   drawGrid();
   drawWorldBounds();
 
-  // gems, health packs, magnets beneath everything
+  // gems, coins, health packs, magnets beneath everything
   for (const g of gems) drawGem(g);
+  for (const c of coinDrops) drawCoin(c);
   for (const hp of healthPacks) drawHealthPack(hp);
   for (const mg of magnets) drawMagnet(mg);
   // black holes — drawn under enemies so enemies appear "in" them
@@ -3232,6 +3286,7 @@ function updateHUD() {
   const timeStr = `${m}:${s.toString().padStart(2,'0')}`;
   document.getElementById('time-val').textContent = timeStr;
   document.getElementById('kills-val').textContent = kills;
+  document.getElementById('coins-val').textContent = coins;
   const hpPct = Math.max(0, player.hp / player.maxHp * 100);
   document.getElementById('hp-fill').style.width = hpPct + '%';
   document.getElementById('hp-val').textContent = `${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp}`;
@@ -3368,7 +3423,7 @@ function startGame() {
   detonateFlash = 0;
   cameraShakeTime = 0;
   cameraShakeAmp = 0;
-  enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
+  enemies = []; projectiles = []; gems = []; coinDrops = []; coins = 0; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
   blackHoles = []; scytheEffects = []; shockwaveEffects = []; blackHoleSpawnTimer = BLACK_HOLE_RATE;
   timeMs = 0; kills = 0; wave = 1; waveTimer = 0; spawnTimer = 0;
   bossActive = false; bossWarning = 0; bossSpawnPending = false; lastBossWave = 0; bossesDefeated = 0;
@@ -3408,7 +3463,7 @@ function abandonRun() {
   if (!confirm('Abandon current run? Your progress will be lost (but gems already earned in past runs are safe).')) return;
   runInProgress = false;
   // Also clear any in-game state so render() doesn't show ghost entities later
-  enemies = []; projectiles = []; gems = []; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
+  enemies = []; projectiles = []; gems = []; coinDrops = []; coins = 0; healthPacks = []; magnets = []; particles = []; floatingTexts = []; lightningArcs = [];
   refreshHubUI();
 }
 
