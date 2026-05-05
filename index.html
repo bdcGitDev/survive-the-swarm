@@ -270,7 +270,7 @@
     background: rgba(10, 6, 18, 0.92);
     border: 1px solid rgba(0, 240, 255, 0.4);
     border-radius: 6px;
-    padding: 20px 22px;
+    padding: 14px 22px 20px;
     box-shadow: 0 0 30px rgba(0, 240, 255, 0.22);
     backdrop-filter: blur(6px);
     z-index: 200;
@@ -279,6 +279,79 @@
     line-height: 1.6;
     color: var(--text);
     overflow-y: auto;
+  }
+  /* Tabs and buy buttons capture clicks; the panel background stays click-through */
+  .panel-tab, .upgrade-buy { pointer-events: auto; }
+  /* Panel tab strip */
+  .panel-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+  }
+  .panel-tab {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--text-dim);
+    font-family: 'Bungee', cursive;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 8px 0;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+  .panel-tab:hover { color: var(--accent-2); }
+  .panel-tab.active {
+    color: var(--accent-2);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+    background: rgba(0, 240, 255, 0.07);
+    border-radius: 3px 3px 0 0;
+  }
+  .panel-page { display: none; }
+  .panel-page.active { display: block; }
+  /* Upgrade rows in the UPGRADES tab */
+  .upgrade-row { margin-bottom: 18px; }
+  .upgrade-row:last-child { margin-bottom: 0; }
+  .upgrade-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .upgrade-name {
+    font-family: 'Bungee', cursive;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+  }
+  .upgrade-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-2);
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+  }
+  .upgrade-buy {
+    width: 100%;
+    background: rgba(255, 214, 10, 0.10);
+    border: 1px solid rgba(255, 214, 10, 0.5);
+    color: #ffd60a;
+    font-family: 'Bungee', cursive;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    padding: 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .upgrade-buy:hover:not(:disabled) { background: rgba(255, 214, 10, 0.25); }
+  .upgrade-buy:disabled { opacity: 0.4; cursor: not-allowed; }
+  .upgrade-buy.maxed {
+    background: rgba(124, 255, 178, 0.10);
+    border-color: rgba(124, 255, 178, 0.5);
+    color: #7cffb2;
+    opacity: 1;
   }
   #stats-panel .section {
     margin-bottom: 22px;
@@ -1297,29 +1370,56 @@
 
   <!-- Live stats panel -->
   <div id="stats-panel" class="ingame-only hidden">
-    <div class="section">
-      <div class="section-title">PLAYER</div>
-      <div class="row"><span>HP</span><span id="sp-hp">100 / 100</span></div>
-      <div class="row"><span>Level</span><span id="sp-level">1</span></div>
-      <div class="row"><span>XP</span><span id="sp-xp">0 / 5</span></div>
-      <div class="row"><span>Move Spd</span><span id="sp-move">1.5</span></div>
-      <div class="row"><span>Magnet</span><span id="sp-magnet">50</span></div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-page="stats">STATS</button>
+      <button class="panel-tab" data-page="upgrades">UPGRADES</button>
     </div>
-    <div class="section">
-      <div class="section-title">WEAPON</div>
-      <div class="weapon-name" id="sp-weapon">SLINGSHOT</div>
-      <div class="row"><span>Damage</span><span id="sp-dmg">10</span></div>
-      <div class="row"><span>Fire Rate</span><span id="sp-rate">1.43/s</span></div>
-      <div class="row"><span>Proj. Spd</span><span id="sp-pspd">7</span></div>
-      <div class="row"><span>Proj. Count</span><span id="sp-pcnt">1</span></div>
-      <div class="row"><span>Pierce</span><span id="sp-pierce">0</span></div>
+
+    <div class="panel-page active" id="panel-stats">
+      <div class="section">
+        <div class="section-title">PLAYER</div>
+        <div class="row"><span>HP</span><span id="sp-hp">100 / 100</span></div>
+        <div class="row"><span>Level</span><span id="sp-level">1</span></div>
+        <div class="row"><span>XP</span><span id="sp-xp">0 / 5</span></div>
+        <div class="row"><span>Move Spd</span><span id="sp-move">1.5</span></div>
+        <div class="row"><span>Magnet</span><span id="sp-magnet">50</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">WEAPON</div>
+        <div class="weapon-name" id="sp-weapon">SLINGSHOT</div>
+        <div class="row"><span>Damage</span><span id="sp-dmg">10</span></div>
+        <div class="row"><span>Fire Rate</span><span id="sp-rate">1.43/s</span></div>
+        <div class="row"><span>Proj. Spd</span><span id="sp-pspd">7</span></div>
+        <div class="row"><span>Proj. Count</span><span id="sp-pcnt">1</span></div>
+        <div class="row"><span>Pierce</span><span id="sp-pierce">0</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">ARENA</div>
+        <div class="row"><span>Wave</span><span id="sp-wave">1</span></div>
+        <div class="row"><span>Enemies</span><span id="sp-enemies">0</span></div>
+        <div class="row"><span>Kills</span><span id="sp-kills">0</span></div>
+        <div class="row"><span>Time</span><span id="sp-time">0:00</span></div>
+      </div>
     </div>
-    <div class="section">
-      <div class="section-title">ARENA</div>
-      <div class="row"><span>Wave</span><span id="sp-wave">1</span></div>
-      <div class="row"><span>Enemies</span><span id="sp-enemies">0</span></div>
-      <div class="row"><span>Kills</span><span id="sp-kills">0</span></div>
-      <div class="row"><span>Time</span><span id="sp-time">0:00</span></div>
+
+    <div class="panel-page" id="panel-upgrades">
+      <div class="section">
+        <div class="section-title">CRIT</div>
+        <div class="upgrade-row">
+          <div class="upgrade-info">
+            <span class="upgrade-name">CRIT CHANCE</span>
+            <span class="upgrade-value" id="up-crit-chance-val">🔒 LOCKED</span>
+          </div>
+          <button class="upgrade-buy" id="up-crit-chance-btn" type="button">5 COINS — UNLOCK</button>
+        </div>
+        <div class="upgrade-row">
+          <div class="upgrade-info">
+            <span class="upgrade-name">CRIT MULTIPLIER</span>
+            <span class="upgrade-value" id="up-crit-mult-val">🔒 LOCKED</span>
+          </div>
+          <button class="upgrade-buy" id="up-crit-mult-btn" type="button">5 COINS — UNLOCK</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1580,6 +1680,11 @@ function makePlayer() {
     speed: 1.5,
     hp: 100, maxHp: 100,
     damageMult: 1,        // multiplier on incoming damage (lowered by Iron Hide upgrade)
+    // Crit (bought with coins via the side-panel UPGRADES tab — both reset each run)
+    critChanceUnlocked: false,
+    critChance: 0,        // 0.05 once unlocked, +0.01/upgrade, caps at 0.5
+    critMultUnlocked: false,
+    critMult: 1,          // 1.5 once unlocked, +0.1/upgrade, caps at 5
     level: 1, xp: 0, xpToNext: 5,
     // weapon
     fireCooldown: 0,
@@ -1770,8 +1875,7 @@ function applyScytheTick(radius) {
     const dx = e.x - player.x, dy = e.y - player.y;
     const dist = Math.hypot(dx, dy);
     if (dist < radius + e.r) {
-      e.hp -= damage;
-      lifesteal(damage);
+      applyHit(e, damage);
       e.hitFlash = 80;
       // Slight knockback (smaller than projectile, bosses still immune)
       if (!e.isBoss) {
@@ -1800,8 +1904,7 @@ function castStaff() {
   if (!nearest) return;
 
   const damage = devMode.unlimitedDmg ? 99999 : player.projDamage;
-  nearest.hp -= damage;
-  lifesteal(damage);
+  applyHit(nearest, damage);
   nearest.hitFlash = 80;
   const hit = new Set([nearest]);
   // Visual arc from player to first target
@@ -1853,8 +1956,7 @@ function triggerChainLightning(fromEnemy, damage, chainsLeft, alreadyHit) {
     if (!nextTarget) break;
 
     // Damage chained target
-    nextTarget.hp -= currentDamage;
-    lifesteal(currentDamage);
+    applyHit(nextTarget, currentDamage);
     nextTarget.hitFlash = 80;
     alreadyHit.add(nextTarget);
 
@@ -1890,8 +1992,20 @@ function burst(x, y, color, count = 8, speed = 3) {
   }
 }
 
-function floatText(x, y, text, color = '#fff') {
-  floatingTexts.push({ x, y, text, color, life: 800, maxLife: 800, vy: -0.6 });
+function floatText(x, y, text, color = '#fff', size = 14) {
+  floatingTexts.push({ x, y, text, color, size, life: 800, maxLife: 800, vy: -0.6 });
+}
+
+// Apply player damage to an enemy with crit roll, lifesteal, and crit float text.
+// Use this for any WEAPON damage source (slingshot, scythe, lightning, etc.) — NOT cards.
+function applyHit(e, baseDmg) {
+  const canCrit = player && player.critChanceUnlocked && player.critMultUnlocked;
+  const isCrit = canCrit && Math.random() < player.critChance;
+  const dmg = isCrit ? baseDmg * player.critMult : baseDmg;
+  e.hp -= dmg;
+  lifesteal(dmg);
+  if (isCrit) floatText(e.x, e.y - 18, `CRIT! ${Math.round(dmg)}`, '#ffd60a', 18);
+  return dmg;
 }
 
 // =============================================================
@@ -2150,6 +2264,96 @@ function refreshCardsPage() {
       refreshCardsPage();
     });
   });
+}
+
+// =============================================================
+// IN-RUN UPGRADES (bought with coins from the side-panel UPGRADES tab)
+// =============================================================
+const CRIT_CHANCE_UNLOCK_COST = 5;
+const CRIT_MULT_UNLOCK_COST = 5;
+const CRIT_UPGRADE_COST = 1;
+const CRIT_CHANCE_START = 0.05;
+const CRIT_CHANCE_STEP = 0.01;
+const CRIT_CHANCE_MAX = 0.5;
+const CRIT_MULT_START = 1.5;
+const CRIT_MULT_STEP = 0.1;
+const CRIT_MULT_MAX = 5.0;
+
+function buyCritChance() {
+  if (!player) return;
+  if (!player.critChanceUnlocked) {
+    if (coins < CRIT_CHANCE_UNLOCK_COST) return;
+    coins -= CRIT_CHANCE_UNLOCK_COST;
+    player.critChanceUnlocked = true;
+    player.critChance = CRIT_CHANCE_START;
+    floatText(player.x, player.y - 26, '+CRIT CHANCE', '#ffd60a');
+  } else if (player.critChance < CRIT_CHANCE_MAX) {
+    if (coins < CRIT_UPGRADE_COST) return;
+    coins -= CRIT_UPGRADE_COST;
+    player.critChance = Math.min(CRIT_CHANCE_MAX, player.critChance + CRIT_CHANCE_STEP);
+    floatText(player.x, player.y - 26, `CRIT ${Math.round(player.critChance * 100)}%`, '#ffd60a');
+  }
+}
+
+function buyCritMult() {
+  if (!player) return;
+  if (!player.critMultUnlocked) {
+    if (coins < CRIT_MULT_UNLOCK_COST) return;
+    coins -= CRIT_MULT_UNLOCK_COST;
+    player.critMultUnlocked = true;
+    player.critMult = CRIT_MULT_START;
+    floatText(player.x, player.y - 26, '+CRIT DAMAGE', '#ffd60a');
+  } else if (player.critMult < CRIT_MULT_MAX) {
+    if (coins < CRIT_UPGRADE_COST) return;
+    coins -= CRIT_UPGRADE_COST;
+    player.critMult = Math.min(CRIT_MULT_MAX, player.critMult + CRIT_MULT_STEP);
+    floatText(player.x, player.y - 26, `CRIT ${player.critMult.toFixed(1)}x`, '#ffd60a');
+  }
+}
+
+function refreshUpgradesPanel() {
+  if (!player) return;
+  const ccVal = document.getElementById('up-crit-chance-val');
+  const ccBtn = document.getElementById('up-crit-chance-btn');
+  const cmVal = document.getElementById('up-crit-mult-val');
+  const cmBtn = document.getElementById('up-crit-mult-btn');
+  if (!ccVal || !ccBtn || !cmVal || !cmBtn) return;
+
+  // Crit chance
+  if (!player.critChanceUnlocked) {
+    ccVal.textContent = '🔒 LOCKED';
+    ccBtn.textContent = `${CRIT_CHANCE_UNLOCK_COST} COINS — UNLOCK`;
+    ccBtn.disabled = coins < CRIT_CHANCE_UNLOCK_COST;
+    ccBtn.classList.remove('maxed');
+  } else if (player.critChance >= CRIT_CHANCE_MAX - 1e-6) {
+    ccVal.textContent = `${Math.round(CRIT_CHANCE_MAX * 100)}% (MAX)`;
+    ccBtn.textContent = 'MAXED';
+    ccBtn.disabled = true;
+    ccBtn.classList.add('maxed');
+  } else {
+    ccVal.textContent = `${Math.round(player.critChance * 100)}%`;
+    ccBtn.textContent = `${CRIT_UPGRADE_COST} COIN — +${Math.round(CRIT_CHANCE_STEP * 100)}%`;
+    ccBtn.disabled = coins < CRIT_UPGRADE_COST;
+    ccBtn.classList.remove('maxed');
+  }
+
+  // Crit multiplier
+  if (!player.critMultUnlocked) {
+    cmVal.textContent = '🔒 LOCKED';
+    cmBtn.textContent = `${CRIT_MULT_UNLOCK_COST} COINS — UNLOCK`;
+    cmBtn.disabled = coins < CRIT_MULT_UNLOCK_COST;
+    cmBtn.classList.remove('maxed');
+  } else if (player.critMult >= CRIT_MULT_MAX - 1e-6) {
+    cmVal.textContent = `${CRIT_MULT_MAX.toFixed(1)}x (MAX)`;
+    cmBtn.textContent = 'MAXED';
+    cmBtn.disabled = true;
+    cmBtn.classList.add('maxed');
+  } else {
+    cmVal.textContent = `${player.critMult.toFixed(1)}x`;
+    cmBtn.textContent = `${CRIT_UPGRADE_COST} COIN — +${CRIT_MULT_STEP.toFixed(1)}x`;
+    cmBtn.disabled = coins < CRIT_UPGRADE_COST;
+    cmBtn.classList.remove('maxed');
+  }
 }
 
 function pickUpgrades() {
@@ -2416,8 +2620,7 @@ function update(dt) {
         const dx = e.x - bh.x, dy = e.y - bh.y;
         if (Math.hypot(dx, dy) < bh.explosionRadius + e.r) {
           const dmg = devMode.unlimitedDmg ? 99999 : e.maxHp * 0.7;
-          e.hp -= dmg;
-          lifesteal(dmg);
+          applyHit(e, dmg);
           e.hitFlash = 80;
         }
       }
@@ -2457,8 +2660,7 @@ function update(dt) {
       const dist = Math.hypot(dx, dy);
       if (dist < e.r + p.r) {
         const projDmg = devMode.unlimitedDmg ? 99999 : p.damage;
-        e.hp -= projDmg;
-        lifesteal(projDmg);
+        applyHit(e, projDmg);
         e.hitFlash = 80;
         // Knockback (bosses are immune)
         if (!e.isBoss) {
@@ -2493,8 +2695,7 @@ function update(dt) {
       while (e.burnTickAccum >= 250) {
         e.burnTickAccum -= 250;
         const tickDmg = e.burnDamagePerSec * 0.25;
-        e.hp -= tickDmg;
-        lifesteal(tickDmg);
+        applyHit(e, tickDmg);
       }
       if (e.burnTime <= 0) {
         e.burnTime = 0;
@@ -3215,7 +3416,7 @@ function drawFloatText(t) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.fillStyle = t.color;
-  ctx.font = 'bold 14px "JetBrains Mono", monospace';
+  ctx.font = `bold ${t.size || 14}px "JetBrains Mono", monospace`;
   ctx.textAlign = 'center';
   ctx.fillText(t.text, t.x, t.y);
   ctx.restore();
@@ -3311,6 +3512,7 @@ function updateHUD() {
   document.getElementById('sp-time').textContent = timeStr;
 
   refreshCardsPanel();
+  refreshUpgradesPanel();
 }
 
 // =============================================================
@@ -3656,6 +3858,19 @@ document.getElementById('hub-return-btn').onclick = () => showHub('home');
 
 // Load saved card loadout (if any) before showing the hub.
 loadEquippedCards();
+
+// Side-panel tab switching (STATS / UPGRADES)
+document.querySelectorAll('.panel-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pageName = btn.dataset.page;
+    document.querySelectorAll('.panel-tab').forEach(b => b.classList.toggle('active', b.dataset.page === pageName));
+    document.querySelectorAll('.panel-page').forEach(p => p.classList.toggle('active', p.id === 'panel-' + pageName));
+  });
+});
+
+// Side-panel upgrade buy buttons
+document.getElementById('up-crit-chance-btn').addEventListener('click', buyCritChance);
+document.getElementById('up-crit-mult-btn').addEventListener('click', buyCritMult);
 
 // Initial state: show the hub on the home tab
 showHub('home');
